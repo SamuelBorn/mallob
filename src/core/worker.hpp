@@ -22,7 +22,7 @@
 #include "comm/message_subscription.hpp"
 #include "comm/randomized_routing_tree.hpp"
 #include "comm/async_collective.hpp"
-#include "clause_sharing/group_sharing_map.hpp"
+#include "cross_instance_clause_sharing/group_sharing_map.hpp"
 
 /*
 Primary actor in the system who is responsible for participating in the scheduling and execution of jobs.

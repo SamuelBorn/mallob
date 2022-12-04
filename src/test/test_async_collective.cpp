@@ -12,7 +12,7 @@
 #include "util/params.hpp"
 #include "comm/async_collective.hpp"
 #include "util/sys/threading.hpp"
-#include "clause_sharing/group_sharing_map.hpp"
+#include "cross_instance_clause_sharing/group_sharing_map.hpp"
 
 // String wrapper with concatenation as an aggregation operation.
 // Note that this is a non-commutative operation.

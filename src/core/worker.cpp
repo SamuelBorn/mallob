@@ -17,7 +17,7 @@
 #include "util/sys/terminator.hpp"
 #include "util/sys/thread_pool.hpp"
 #include "comm/message_warmup.hpp"
-#include "clause_sharing/group_sharing_map.hpp"
+#include "cross_instance_clause_sharing/group_sharing_map.hpp"
 #include "comm/async_collective_tags.hpp"
 
 Worker::Worker(MPI_Comm comm, Parameters& params) :
@@ -221,7 +221,7 @@ void Worker::allGatherGroupIds() {
         Job &job = _job_registry.getActive();
         int group_id = job.getDescription().getGroupId();
         if (job.getJobTree().isRoot() && group_id != -1) {
-            contribution.map[group_id] = {_world_rank, job.isPartOfRing()};
+            contribution.data[group_id] = {_world_rank, job.isPartOfRing()};
         }
     }
 
