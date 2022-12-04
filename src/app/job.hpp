@@ -181,6 +181,8 @@ private:
     mutable int _age_of_const_cooldown = -1;
     mutable int _last_demand = 0;
 
+    int _next_ring_member_rank = -1;
+
 // Public methods.
 public:
 
@@ -334,6 +336,14 @@ public:
     const char* jobStateToStr() const {return JOB_STATE_STRINGS[(int)_state];};
     static std::string toStr(int jobId, int jobIndex) {
         return "#" + std::to_string(jobId) + ":" + std::to_string(jobIndex);
+    }
+
+    int getNextRingMemberRank() {
+        return _next_ring_member_rank;
+    };
+
+    bool isPartOfRing() {
+        return _next_ring_member_rank != -1;
     }
 };
 

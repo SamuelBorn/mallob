@@ -1,0 +1,5 @@
+c syntax: "p cnf NUM_VAR NUM_CLAUSES"
+c the following represents this: (x ∨ y ∨ ¬z) ∧ (¬y ∨ z)
+p cnf 3 2
+1 2 -3 0
+-2 3 0

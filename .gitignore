@@ -11,3 +11,6 @@ instances/*.uri
 upload.sh
 download.sh
 src/app/register_*.h*
+.idea
+cmake-build-debug
+lib

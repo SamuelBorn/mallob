@@ -43,6 +43,10 @@ private:
     Mutex _job_map_mutex;
     JobIdAllocator _job_id_allocator;
 
+    Mutex _group_map_mutex;
+    std::map<std::string, int> _group_id_map;  // map string group ids from json input to int group id for easy serialization
+    int _next_group_id = 0;  // determines what the next group id has to be. Gets incremented on new group creation.
+
     std::function<void(JobMetadata&&)> _job_callback;
     
     robin_hood::unordered_node_map<std::string, std::pair<int, int>> _job_name_to_id_rev;

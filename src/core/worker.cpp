@@ -17,12 +17,15 @@
 #include "util/sys/terminator.hpp"
 #include "util/sys/thread_pool.hpp"
 #include "comm/message_warmup.hpp"
+#include "clause_sharing/group_sharing_map.hpp"
+#include "comm/async_collective_tags.hpp"
 
 Worker::Worker(MPI_Comm comm, Parameters& params) :
     _comm(comm), _world_rank(MyMpi::rank(MPI_COMM_WORLD)), 
     _params(params), _job_registry(_params, _comm), _routing_tree(_params, _comm), 
     _sys_state(_comm, params.sysstatePeriod(), SysState<9>::ALLREDUCE), 
-    _sched_man(_params, _comm, _routing_tree, _job_registry, _sys_state), 
+    _sched_man(_params, _comm, _routing_tree, _job_registry, _sys_state),
+    _group_sharing_collective(_comm, MyMpi::getMessageQueue(), ASYNC_COLLECTIVE_GROUP_ID_SHARING),
     _watchdog(/*enabled=*/_params.watchdog(), /*checkIntervMillis=*/100, Timer::elapsedSeconds())
 {
     _watchdog.setWarningPeriod(50); // warn after 50ms without a reset
@@ -82,6 +85,11 @@ void Worker::advance(float time) {
     if (_sys_state.aggregate(time)) {
         _watchdog.setActivity(Watchdog::SYSSTATE);
         publishAndResetSysState();
+    }
+
+    // All reduction of group ids
+    if (_all_gather_group_ids.ready(time)) {
+        allGatherGroupIds();
     }
 
     _watchdog.setActivity(Watchdog::IDLE_OR_HANDLING_MSG);
@@ -205,6 +213,21 @@ void Worker::publishAndResetSysState() {
     _sys_state.setLocal(SYSSTATE_NUMDESIRES, 0);
     _sys_state.setLocal(SYSSTATE_NUMFULFILLEDDESIRES, 0);
     _sys_state.setLocal(SYSSTATE_SUMDESIRELATENCIES, 0);
+}
+
+void Worker::allGatherGroupIds() {
+    GroupSharingMap contribution;
+    if (_job_registry.hasActiveJob()) {
+        Job &job = _job_registry.getActive();
+        int group_id = job.getDescription().getGroupId();
+        if (job.getJobTree().isRoot() && group_id != -1) {
+            contribution.map[group_id] = {_world_rank, job.isPartOfRing()};
+        }
+    }
+
+    _group_sharing_collective.allReduce(_reduction_call_counter++, contribution, [&](auto &results){
+
+    });
 }
 
 Worker::~Worker() {

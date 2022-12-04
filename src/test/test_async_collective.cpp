@@ -12,6 +12,7 @@
 #include "util/params.hpp"
 #include "comm/async_collective.hpp"
 #include "util/sys/threading.hpp"
+#include "clause_sharing/group_sharing_map.hpp"
 
 // String wrapper with concatenation as an aggregation operation.
 // Note that this is a non-commutative operation.
@@ -517,6 +518,27 @@ void testDifferentialSparsePrefixSum() {
             }
         }
     }
+}
+
+void testGroupSharingMap() {
+    GroupSharingMap m1;
+    GroupSharingMap m2;
+
+    m1.data[1] = {1, true};
+    m1.data[2] = {2, false};
+    m1.data[3] = {3, false};
+
+    m2.data[1] = {4, false};
+    m2.data[2] = {5, true};
+    m2.data[4] = {6, false};
+
+    m1.aggregate(m2);
+    assert(m1.data.size() == 4);
+
+    assert(m1.data[1].first == 1);
+    assert(m1.data[2].first == 5);
+    assert(m1.data[3].first == 3);
+    assert(m1.data[4].first == 6);
 }
 
 int main(int argc, char *argv[]) {

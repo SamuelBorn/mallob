@@ -218,10 +218,35 @@ JsonInterface::Result JsonInterface::handle(nlohmann::json& inputJson,
         idDependencies.push_back(_job_name_to_id_rev[name].first); // TODO inexact: introduce dependencies for job revisions
     }
 
+    /*
+     * Checks if a group parameter is passed.
+     * If not a group id of -1 indicates no group.
+     * Otherwise, look up if there already is a member of this group.
+     * If there is a member, give the new process the int id of the other member.
+     * Otherwise, get the next group id and give it to the process.
+     */
+    int group_id = -1;
+    if (json.contains("group_id")) {
+        std::string group_id_string = json["group_id"].get<std::string>();
+
+        auto group_map_lock = _group_map_mutex.getLock();
+
+        auto map_entry = _group_id_map.find(group_id_string);
+
+        if (map_entry == _group_id_map.end()) {  // check if group id already exists
+            group_id = _next_group_id;
+            _group_id_map.insert({group_id_string, _next_group_id});
+            _next_group_id++;
+        } else {
+            group_id = map_entry->second;
+        }
+    }
+
     // Callback to client: New job arrival.
     JobMetadata metadata;
     metadata.jobName = jobName;
     metadata.description = std::unique_ptr<JobDescription>(job);
+    metadata.description->setGroupId(group_id);
     metadata.files = std::move(files);
     metadata.dependencies = std::move(idDependencies);
     _job_callback(std::move(metadata));

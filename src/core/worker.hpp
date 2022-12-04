@@ -21,6 +21,8 @@
 #include "comm/host_comm.hpp"
 #include "comm/message_subscription.hpp"
 #include "comm/randomized_routing_tree.hpp"
+#include "comm/async_collective.hpp"
+#include "clause_sharing/group_sharing_map.hpp"
 
 /*
 Primary actor in the system who is responsible for participating in the scheduling and execution of jobs.
@@ -46,6 +48,7 @@ private:
     PeriodicEvent<10> _periodic_job_check;
     PeriodicEvent<1> _periodic_balance_check;
     PeriodicEvent<1000> _periodic_maintenance;
+    PeriodicEvent<1000> _all_gather_group_ids;
     Watchdog _watchdog;
 
     std::atomic_bool _node_stats_calculated = true;
@@ -56,6 +59,9 @@ private:
     unsigned long _machine_total_kbs = 0;
 
     HostComm* _host_comm;
+
+    AsyncCollective<GroupSharingMap> _group_sharing_collective;
+    int _reduction_call_counter = 1;
 
 public:
     Worker(MPI_Comm comm, Parameters& params);
@@ -69,6 +75,7 @@ private:
     void checkJobs();
     void checkActiveJob();
     void publishAndResetSysState();
+    void allGatherGroupIds();
 };
 
 #endif
