@@ -169,6 +169,8 @@ const int MSG_ALLREDUCE_FILTER = 418;
 const int MSG_AGGREGATE_RANKLIST = 419;
 const int MSG_BROADCAST_RANKLIST = 420; // blaze it
 
-
+// Clause Sharing message tags
+const int MSG_JOIN_RING_REQUEST = 500;
+const int MSG_JOIN_RING_REQUEST_ACCEPT = 501;
 
 #endif

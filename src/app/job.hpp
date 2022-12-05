@@ -18,6 +18,7 @@
 #include "app/job_tree.hpp"
 #include "comm/job_comm.hpp"
 #include "scheduling/local_scheduler.hpp"
+#include "cross_instance_clause_sharing/inter_job_communicator.hpp"
 
 typedef std::function<void(const JobRequest& req, int tag, bool left, int dest)> EmitDirectedJobRequestCallback;
 
@@ -340,6 +341,10 @@ public:
 
     int getNextRingMemberRank() {
         return _next_ring_member_rank;
+    };
+
+    int setNextRingMemberRank(int rank) {
+        _next_ring_member_rank = rank;
     };
 
     bool isPartOfRing() {

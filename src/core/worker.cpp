@@ -221,7 +221,7 @@ void Worker::allGatherGroupIds() {
         Job &job = _job_registry.getActive();
         int group_id = job.getDescription().getGroupId();
         if (job.getJobTree().isRoot() && group_id != -1) {
-            contribution.data[group_id] = {_world_rank, job.isPartOfRing()};
+            contribution.data[group_id] = {MyMpi::rank(_comm), job.isPartOfRing()};
         }
     }
 
