@@ -18,7 +18,6 @@ private:
         handleJoinRingRequestAccept(h);
     });
     Job &job;
-    int group_id;
     std::list<int> open_join_request_ranks;
     int reductionInstanceCounter = -1;
 
