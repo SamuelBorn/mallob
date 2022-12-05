@@ -216,18 +216,22 @@ void Worker::publishAndResetSysState() {
 }
 
 void Worker::allGatherGroupIds() {
+    Job &job = _job_registry.getActive();
+    bool valid_job = _job_registry.hasActiveJob() && job.getJobTree().isRoot() && job.getDescription().getGroupId() != -1;
+
     GroupSharingMap contribution;
-    if (_job_registry.hasActiveJob()) {
-        Job &job = _job_registry.getActive();
-        int group_id = job.getDescription().getGroupId();
-        if (job.getJobTree().isRoot() && group_id != -1) {
-            contribution.data[group_id] = {MyMpi::rank(_comm), job.isPartOfRing()};
-        }
+    if (valid_job) {
+        job.getInterJobCommunicator().handleOpenJoinRingRequests();
+        contribution.data[job.getDescription().getGroupId()] = {MyMpi::rank(_comm), job.isPartOfRing()};
     }
 
-    _group_sharing_collective.allReduce(_reduction_call_counter++, contribution, [&](auto &results){
-
-    });
+    std::map<int, std::pair<int, bool>> ring_representatives;
+    _group_sharing_collective.allReduce(_reduction_call_counter++, contribution,[&](std::list<GroupSharingMap> &results) {
+                                            ring_representatives = results.front().data;
+                                        });
+    if (valid_job) {
+        job.getInterJobCommunicator().gatherIntoRing(ring_representatives, _comm, _reduction_call_counter);
+    }
 }
 
 Worker::~Worker() {

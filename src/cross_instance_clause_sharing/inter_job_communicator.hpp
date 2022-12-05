@@ -1,14 +1,16 @@
 #pragma once
 
+#include <array>
 #include "comm/message_subscription.hpp"
 #include "app/job.hpp"
 
 class Job;
 
 class InterJobCommunicator {
-private:
+public:
     InterJobCommunicator(Job &job);
 
+private:
     MessageSubscription join_ring_request_subscription = MessageSubscription(MSG_JOIN_RING_REQUEST, [&](auto &h) {
         handleJoinRingRequest(h);
     });
@@ -17,15 +19,19 @@ private:
     });
     Job &job;
     int group_id;
-    std::list<std::pair<int, int>> open_join_requests;
+    std::list<int> open_join_request_ranks;
+    int reductionInstanceCounter = -1;
 
 public:
-    void gatherIntoRing(std::map<int, std::pair<int, bool>> reps, MPI_Comm _comm);
+    void gatherIntoRing(std::map<int, std::pair<int, bool>> reps, MPI_Comm _comm, int reductionInstanceCounter);
+    void handleOpenJoinRingRequests();
 
 private:
-    bool handleJoinRingRequest(MessageHandle &h);
-    bool handleJoinRingRequestAccept(MessageHandle &h);
+    void handleJoinRingRequest(MessageHandle &h);
+    void handleJoinRingRequestAccept(MessageHandle &h);
     bool createNewRing(std::map<int, std::pair<int, bool>> reps, MPI_Comm _comm);
+
+    void acceptIntoRing(int rankToJoin);
 };
 
 

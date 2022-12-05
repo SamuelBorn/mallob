@@ -183,6 +183,7 @@ private:
     mutable int _last_demand = 0;
 
     int _next_ring_member_rank = -1;
+    InterJobCommunicator interJobCommunicator;
 
 // Public methods.
 public:
@@ -341,14 +342,18 @@ public:
 
     int getNextRingMemberRank() {
         return _next_ring_member_rank;
-    };
+    }
 
-    int setNextRingMemberRank(int rank) {
+    void setNextRingMemberRank(int rank) {
         _next_ring_member_rank = rank;
-    };
+    }
 
     bool isPartOfRing() {
         return _next_ring_member_rank != -1;
+    }
+
+    InterJobCommunicator &getInterJobCommunicator() {
+        return interJobCommunicator;
     }
 };
 

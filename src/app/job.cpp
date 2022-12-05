@@ -17,6 +17,7 @@ Job::Job(const Parameters& params, const JobSetup& setup) :
             _incremental(setup.incremental),
             _time_of_arrival(Timer::elapsedSeconds()), 
             _state(INACTIVE),
+            interJobCommunicator(*this),
             _job_tree(setup.commSize, setup.worldRank, setup.jobId, params.useDormantChildren()), 
             _comm(_id, _job_tree, params.jobCommUpdatePeriod()) {
     
