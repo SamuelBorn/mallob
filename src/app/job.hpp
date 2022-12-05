@@ -19,6 +19,7 @@
 #include "comm/job_comm.hpp"
 #include "scheduling/local_scheduler.hpp"
 #include "cross_instance_clause_sharing/inter_job_communicator.hpp"
+#include "cross_instance_clause_sharing/ring_message.hpp"
 
 typedef std::function<void(const JobRequest& req, int tag, bool left, int dest)> EmitDirectedJobRequestCallback;
 
