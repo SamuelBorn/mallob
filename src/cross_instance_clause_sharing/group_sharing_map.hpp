@@ -46,8 +46,8 @@ struct GroupSharingMap : public Reduceable {
     virtual void aggregate(const Reduceable &other) {
         GroupSharingMap *otherMap = (GroupSharingMap *) &other;
         for (auto &[key, val]: otherMap->data) {
-            if (val.second || !otherMap->data[key].second) {
-                // otherMap->data[key].second is false if entry does not exist
+            if (val.second || !data[key].second) {
+                // data[key].second is false if entry does not exist
                 data[key] = val;
             }
         }
