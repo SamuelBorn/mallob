@@ -234,3 +234,15 @@ void Job::communicate(int source, int mpiTag, JobMessage& msg) {
         appl_communicate(source, mpiTag, msg);
     }
 }
+
+void Job::emitMessageIntoRing(RingMessage r) {
+    if (r.group_id != this->getDescription().getGroupId()) return;
+    MyMpi::isend(this->getNextRingMemberRank(), MSG_RING_MESSAGE, r);
+}
+
+void Job::passRingMessage(RingMessage r) {
+    int my_rank = 5; // TODO
+    if (r.group_id != this->getDescription().getGroupId()) return;
+    if (r.msg_start_rank == my_rank) return;
+    MyMpi::isend(this->getNextRingMemberRank(), MSG_RING_MESSAGE, r);
+}

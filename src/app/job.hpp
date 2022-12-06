@@ -341,21 +341,19 @@ public:
         return "#" + std::to_string(jobId) + ":" + std::to_string(jobIndex);
     }
 
-    int getNextRingMemberRank() {
-        return _next_ring_member_rank;
-    }
+    int getNextRingMemberRank() { return _next_ring_member_rank; }
 
-    void setNextRingMemberRank(int rank) {
-        _next_ring_member_rank = rank;
-    }
+    void setNextRingMemberRank(int rank) { _next_ring_member_rank = rank; }
 
-    bool isPartOfRing() {
-        return _next_ring_member_rank != -1;
-    }
+    bool isPartOfRing() { return _next_ring_member_rank != -1; }
 
-    InterJobCommunicator &getInterJobCommunicator() {
-        return interJobCommunicator;
-    }
+    InterJobCommunicator &getInterJobCommunicator() { return interJobCommunicator; }
+
+    void emitMessageIntoRing(RingMessage r);
+
+    void passRingMessage(RingMessage r);
+
+    //virtual void receiveRingMessage(MessageHandle &h) = 0;
 };
 
 #endif
