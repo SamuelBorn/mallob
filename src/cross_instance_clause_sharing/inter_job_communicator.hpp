@@ -22,14 +22,13 @@ private:
     int reductionInstanceCounter = -1;
 
 public:
-    void gatherIntoRing(std::map<int, std::pair<int, bool>> reps, MPI_Comm _comm, int reductionInstanceCounter);
+    void gatherIntoRing(std::map<int, std::pair<int, bool>> reps, int my_rank, int reductionInstanceCounter);
     void handleOpenJoinRingRequests();
 
 private:
     void handleJoinRingRequest(MessageHandle &h);
     void handleJoinRingRequestAccept(MessageHandle &h);
-    bool createNewRing(std::map<int, std::pair<int, bool>> reps, MPI_Comm _comm);
-
+    bool createNewRing(std::map<int, std::pair<int, bool>> reps, int my_rank);
     void acceptIntoRing(int rankToJoin);
 };
 
