@@ -219,11 +219,11 @@ JsonInterface::Result JsonInterface::handle(nlohmann::json& inputJson,
     }
 
     /*
-     * Checks if a group parameter is passed.
-     * If not a group id of -1 indicates no group.
-     * Otherwise, look up if there already is a member of this group.
-     * If there is a member, give the new process the int id of the other member.
-     * Otherwise, get the next group id and give it to the process.
+     * Is a group_id string passed?
+     * → no: set group id of -1
+     * → yes: does this string already exist?
+     *        → no: set next free group_id
+     *        → yes: lookup the according int group_id
      */
     int group_id = -1;
     if (json.contains("group_id")) {

@@ -1,0 +1,2 @@
+templates/simple_dimacs.cnf
+templates/simple_dimacs2.cnf

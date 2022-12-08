@@ -183,8 +183,7 @@ private:
     mutable int _age_of_const_cooldown = -1;
     mutable int _last_demand = 0;
 
-    int _next_ring_member_rank = -1;
-    InterJobCommunicator interJobCommunicator;
+    InterJobCommunicator _inter_job_communicator;
 
 // Public methods.
 public:
@@ -341,19 +340,7 @@ public:
         return "#" + std::to_string(jobId) + ":" + std::to_string(jobIndex);
     }
 
-    int getNextRingMemberRank() { return _next_ring_member_rank; }
-
-    void setNextRingMemberRank(int rank) { _next_ring_member_rank = rank; }
-
-    bool isPartOfRing() { return _next_ring_member_rank != -1; }
-
-    InterJobCommunicator &getInterJobCommunicator() { return interJobCommunicator; }
-
-    void emitMessageIntoRing(RingMessage r);
-
-    void passRingMessage(RingMessage r);
-
-    //virtual void receiveRingMessage(MessageHandle &h) = 0;
+    InterJobCommunicator &getInterJobCommunicator();
 };
 
 #endif

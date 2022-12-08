@@ -10,16 +10,15 @@
 
 
 Job::Job(const Parameters& params, const JobSetup& setup) :
-            _params(params), 
-            _id(setup.jobId),
-            _name("#" + std::to_string(setup.jobId)),
-            _application_id(setup.applicationId),
-            _incremental(setup.incremental),
-            _time_of_arrival(Timer::elapsedSeconds()), 
-            _state(INACTIVE),
-            interJobCommunicator(*this),
-            _job_tree(setup.commSize, setup.worldRank, setup.jobId, params.useDormantChildren()), 
-            _comm(_id, _job_tree, params.jobCommUpdatePeriod()) {
+        _params(params),
+        _id(setup.jobId),
+        _name("#" + std::to_string(setup.jobId)),
+        _application_id(setup.applicationId),
+        _incremental(setup.incremental),
+        _time_of_arrival(Timer::elapsedSeconds()),
+        _state(INACTIVE),
+        _job_tree(setup.commSize, setup.worldRank, setup.jobId, params.useDormantChildren()),
+        _comm(_id, _job_tree, params.jobCommUpdatePeriod()) {
     
     _growth_period = _params.growthPeriod();
     _continuous_growth = _params.continuousGrowth();
@@ -235,14 +234,6 @@ void Job::communicate(int source, int mpiTag, JobMessage& msg) {
     }
 }
 
-void Job::emitMessageIntoRing(RingMessage r) {
-    if (r.group_id != this->getDescription().getGroupId()) return;
-    MyMpi::isend(this->getNextRingMemberRank(), MSG_RING_MESSAGE, r);
-}
-
-void Job::passRingMessage(RingMessage r) {
-    int my_rank = 5; // TODO
-    if (r.group_id != this->getDescription().getGroupId()) return;
-    if (r.msg_start_rank == my_rank) return;
-    MyMpi::isend(this->getNextRingMemberRank(), MSG_RING_MESSAGE, r);
+InterJobCommunicator &Job::getInterJobCommunicator() {
+    return _inter_job_communicator;
 }

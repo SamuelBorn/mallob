@@ -14,3 +14,4 @@ src/app/register_*.h*
 .idea
 cmake-build-debug
 lib
+mallob_thread_trace_of_*

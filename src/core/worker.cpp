@@ -221,7 +221,7 @@ void Worker::allGatherGroupIds() {
 
     GroupSharingMap contribution;
     if (valid_job) {
-        contribution.data[job.getDescription().getGroupId()] = {MyMpi::rank(_comm), job.isPartOfRing()};
+        contribution.data[job.getDescription().getGroupId()] = {MyMpi::rank(_comm), job.getInterJobCommunicator().partOfRing()};
     }
 
     std::map<int, std::pair<int, bool>> ring_representatives;
@@ -229,7 +229,8 @@ void Worker::allGatherGroupIds() {
                                             ring_representatives = results.front().data;
                                         });
     if (valid_job) {
-        job.getInterJobCommunicator().gatherIntoRing(ring_representatives, MyMpi::rank(_comm), _reduction_call_counter);
+        job.getInterJobCommunicator().setGroupId(job.getDescription().getGroupId());
+        job.getInterJobCommunicator().gatherIntoRing(ring_representatives, _reduction_call_counter);
         job.getInterJobCommunicator().handleOpenJoinRingRequests();
     }
 }

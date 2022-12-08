@@ -11,6 +11,7 @@ struct GroupSharingMap : public Reduceable {
     std::map<int, std::pair<int, bool>> data;
 
     GroupSharingMap() = default;
+    explicit GroupSharingMap(const std::map<int, std::pair<int, bool>> &data) : data(data) {}
 
     virtual std::vector<uint8_t> serialize() const override {
         size_t i = 0;
@@ -44,10 +45,11 @@ struct GroupSharingMap : public Reduceable {
     }
 
     virtual void aggregate(const Reduceable &other) {
-        GroupSharingMap *otherMap = (GroupSharingMap *) &other;
-        for (auto &[key, val]: otherMap->data) {
-            if (val.second || !data[key].second) {
-                // data[key].second is false if entry does not exist
+        GroupSharingMap *other_map = (GroupSharingMap *) &other;
+        for (auto &[key, val]: other_map->data) {
+            auto is_ring_member = val.second;
+            auto ring_member_exists = data[key].second;  // data[key].second is false if entry does not exist
+            if (is_ring_member || !ring_member_exists) {
                 data[key] = val;
             }
         }
