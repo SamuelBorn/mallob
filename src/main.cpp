@@ -20,7 +20,7 @@
 #include "interface/api/job_streamer.hpp"
 #include "comm/host_comm.hpp"
 #include "data/job_transfer.hpp"
-#include "comm/message_subscription.hpp"
+#include "comm/msg_queue/message_subscription.hpp"
 
 #include "app/register_includes.h"
 
@@ -64,7 +64,7 @@ inline bool doTerminate(Parameters& params, int rank) {
     
     bool terminate = false;
     if (Terminator::isTerminating(/*fromMainThread=*/true)) terminate = true;
-    if (params.timeLimit() > 0 && Timer::elapsedSeconds() > params.timeLimit()) {
+    if (params.timeLimit() > 0 && Timer::elapsedSecondsCached() > params.timeLimit()) {
         terminate = true;
     }
     if (terminate) {
@@ -132,7 +132,10 @@ void doMainProgram(MPI_Comm& commWorkers, MPI_Comm& commClients, Parameters& par
     }
 
     // Main loop
-    while (!Terminator::isTerminating(/*fromMainthread*/true)) {
+    while (true) {
+
+        // update cached timing
+        Timer::cacheElapsedSeconds();
 
         // Advance worker and client logic
         if (isWorker) worker->advance();

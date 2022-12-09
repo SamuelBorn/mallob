@@ -43,10 +43,9 @@ void Worker::init() {
     }
 }
 
-void Worker::advance(float time) {
+void Worker::advance() {
 
-    // Timestamp provided?
-    if (time < 0) time = Timer::elapsedSeconds();
+    auto time = Timer::elapsedSecondsCached();
 
     // Reset watchdog
     _watchdog.reset(time);
@@ -54,13 +53,13 @@ void Worker::advance(float time) {
     // Check & print stats
     if (_periodic_stats_check.ready(time)) {
         _watchdog.setActivity(Watchdog::STATS);
-        checkStats(time);
+        checkStats();
     }
 
     // Advance load balancing operations
     if (_periodic_balance_check.ready(time)) {
         _watchdog.setActivity(Watchdog::BALANCING);
-        _sched_man.advanceBalancing(time);
+        _sched_man.advanceBalancing();
     }
 
     // Do diverse periodic maintenance tasks
@@ -95,7 +94,7 @@ void Worker::advance(float time) {
     _watchdog.setActivity(Watchdog::IDLE_OR_HANDLING_MSG);
 }
 
-void Worker::checkStats(float time) {
+void Worker::checkStats() {
 
     // For this process and subprocesses
     if (_node_stats_calculated.load(std::memory_order_acquire)) {
@@ -132,7 +131,7 @@ void Worker::checkStats(float time) {
     }
 
     // Print further stats?
-    if (_periodic_big_stats_check.ready(time)) {
+    if (_periodic_big_stats_check.ready(Timer::elapsedSecondsCached())) {
 
         // For the current job
         if (_job_registry.hasActiveJob()) {
@@ -148,7 +147,8 @@ void Worker::checkStats(float time) {
         }
     }
 
-    if (_params.memoryPanic() && _host_comm && _host_comm->advanceAndCheckMemoryPanic(time)) {
+    if (_params.memoryPanic() && _host_comm && 
+            _host_comm->advanceAndCheckMemoryPanic(Timer::elapsedSecondsCached())) {
         _sched_man.triggerMemoryPanic();
     }
 }

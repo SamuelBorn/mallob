@@ -19,7 +19,7 @@
 #include "util/periodic_event.hpp"
 #include "util/sys/watchdog.hpp"
 #include "comm/host_comm.hpp"
-#include "comm/message_subscription.hpp"
+#include "comm/msg_queue/message_subscription.hpp"
 #include "comm/randomized_routing_tree.hpp"
 #include "comm/async_collective.hpp"
 #include "cross_instance_clause_sharing/group_sharing_map.hpp"
@@ -67,11 +67,11 @@ public:
     Worker(MPI_Comm comm, Parameters& params);
     ~Worker();
     void init();
-    void advance(float time = -1);
+    void advance();
     void setHostComm(HostComm& hostComm) {_host_comm = &hostComm;}
 
 private:
-    void checkStats(float time);
+    void checkStats();
     void checkJobs();
     void checkActiveJob();
     void publishAndResetSysState();

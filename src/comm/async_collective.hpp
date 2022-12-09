@@ -7,7 +7,7 @@
 #include "mympi.hpp"
 #include "util/tsl/robin_map.h"
 #include "util/sys/timer.hpp"
-#include "message_subscription.hpp"
+#include "msg_queue/message_subscription.hpp"
 
 // T must be a subclass of Reduceable (see data/reduceable.hpp).
 // An arbitrary number of collective operations can be performed with a single instance of this class.
@@ -37,8 +37,6 @@ private:
 
     // How many contributions to wait for until data is forwarded?
     int _num_desired_contribs;
-
-    float _last_time {0};
 
     // Internal distinction of operation modes
     enum Mode {
@@ -156,6 +154,7 @@ private:
         float delaySeconds {0};
         float lastForwardTime {0};
     };
+    std::vector<int> _sparse_state_ids;
     tsl::robin_map<int, SparseOperationState> _sparse_states_by_id;
 
     // Counts how many result broadcasts this instance already received
@@ -272,26 +271,33 @@ public:
     }
 
     // Must be called periodically to advance sparse operations.
-    void advanceSparseOperations(float time) {
+    void advanceSparseOperations() {
+
+        auto time = Timer::elapsedSecondsCached();
 
         // Look for an operation which can be advanced
         for (auto it = _sparse_states_by_id.begin(); it != _sparse_states_by_id.end(); ++it) {
             auto callId = it->first;
-            auto& state = _sparse_states_by_id[callId];
+            auto& state = _sparse_states_by_id.at(callId);
 
-            // Bundle which is about to be sent next
-            auto& bundle = state.bundlesByContribId[state.contributionIdCounter];
+            {
+                // Bundle which is about to be sent next
+                auto& bundle = state.bundlesByContribId[state.contributionIdCounter];
 
-            // Is the current bundle ready to be forwarded?
-            if (!bundle.hasContributions())
-                continue; // -- no: no contributions yet
-            if (time - state.lastForwardTime < state.delaySeconds)
-                continue; // -- no: not enough time passed waiting for remaining contribs
-            // -- yes!
+                // Is the current bundle ready to be forwarded?
+                if (!bundle.hasContributions())
+                    continue; // -- no: no contributions yet
+                if (time - state.lastForwardTime < state.delaySeconds)
+                    continue; // -- no: not enough time passed waiting for remaining contribs
+                // -- yes!
+            }
             
             if (state.differential) {
                 // Update bundle with data from previous bundle
                 auto& prevBundle = state.bundlesByContribId[state.contributionIdCounter-1];
+                // Re-fetch reference since the other bundle could have just been created
+                // and there may be no reference stability
+                auto& bundle = state.bundlesByContribId[state.contributionIdCounter];
                 if (bundle.contribIdLeft == 0 && prevBundle.contribIdLeft != 0) {
                     bundle.contribIdLeft = prevBundle.contribIdLeft;
                     bundle.contribLeft = prevBundle.contribLeft;
@@ -308,13 +314,12 @@ public:
 
             // Send bundle with aggregation of all present contributions
             forward(callId, SPARSE_PREFIXSUM_INCL_EXCL_TOTAL,
-                bundle.aggregateContributions(), state.contributionIdCounter);
+                state.bundlesByContribId[state.contributionIdCounter].aggregateContributions(), 
+                state.contributionIdCounter);
             // Proceed with next bundle next time
             state.contributionIdCounter++;
             state.lastForwardTime = time;
         }
-
-        _last_time = time;
     }
 
     int getNumReceivedResults() const {
@@ -392,7 +397,7 @@ private:
                 (fromLeftChild ? bundle.contribLeft : bundle.contribRight) = data.items.front();
                 (fromLeftChild ? bundle.contribIdLeft : bundle.contribIdRight) = data.contributionId;
                 // Perhaps the operation can be advanced now
-                advanceSparseOperations(_last_time);
+                advanceSparseOperations();
             }
 
             // Broadcast

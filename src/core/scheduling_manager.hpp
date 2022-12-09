@@ -7,7 +7,7 @@
 #include "app/job.hpp"
 #include "data/job_transfer.hpp"
 #include "data/worker_sysstate.hpp"
-#include "comm/message_subscription.hpp"
+#include "comm/msg_queue/message_subscription.hpp"
 #include "reactivation_scheduler.hpp"
 #include "request_manager.hpp"
 #include "result_store.hpp"
@@ -51,9 +51,8 @@ public:
     RequestMatcher* createRequestMatcher();
 
     void checkActiveJob();
-    void advanceBalancing(float time);
+    void advanceBalancing();
     bool checkComputationLimits(int jobId);
-    //void advanceBalancing(float time) {_balancer->advance(time);}
     void forwardDeferredRequests() {_req_mgr.forwardDeferredRequests();}
     void tryAdoptPendingRootActivationRequest();
     void forgetOldJobs();
@@ -105,6 +104,6 @@ private:
 
     bool isRequestObsolete(const JobRequest& req);
     enum AdoptionResult {ADOPT, REJECT, DEFER, DISCARD};
-    AdoptionResult tryAdopt(const JobRequest& req, JobRequestMode mode, int sender);
+    AdoptionResult tryAdopt(JobRequest& req, JobRequestMode mode, int sender);
     bool isAdoptionOfferObsolete(const JobRequest& req, bool alreadyAccepted = false);
 };
