@@ -1,21 +1,24 @@
 #include "data/job_transfer.hpp"
-#include "comm/message_subscription.hpp"
+#include "comm/msg_queue/message_subscription.hpp"
 #include "inter_job_communicator.hpp"
 
+#include <iostream>
 
-void InterJobCommunicator::gatherIntoRing(std::map<int, std::pair<int, bool>> &reps, int reduction_instance_counter) {
+
+void InterJobCommunicator::gatherIntoRing(std::map<int, std::pair<int, bool>> &reps, int reduction_call_counter) {
     assert(_group_id != -2);
     if (partOfRing() || createNewRing(reps)) {
-        _reduction_instance_counter = reduction_instance_counter;
+        _reduction_call_counter = reduction_call_counter;
         return;
     }
-    _reduction_instance_counter = reduction_instance_counter;
+    _reduction_call_counter = reduction_call_counter;
 
-    MyMpi::isend(_group_id, MSG_JOIN_RING_REQUEST, IntVec({_group_id, _rank, _reduction_instance_counter}));
+    MyMpi::isend(reps[_group_id].first, MSG_JOIN_RING_REQUEST, IntVec({_group_id, _rank, _reduction_call_counter}));
 }
 
 // If the job is a representative that is not part of a ring  →  create a ring by himself
 bool InterJobCommunicator::createNewRing(std::map<int, std::pair<int, bool>> &reps) {
+    assert(reps.count(_group_id));
     if (reps[_group_id].first == _rank && !reps[_group_id].second) {
         _next_ring_member_rank = _rank;
         return true;
@@ -38,7 +41,7 @@ void InterJobCommunicator::handleJoinRingRequest(MessageHandle &h) {
 
     if (newGroupId != _group_id) return;
 
-    if (requestReductionInstanceCounter > _reduction_instance_counter) {
+    if (requestReductionInstanceCounter > _reduction_call_counter) {
         _open_join_request_ranks.emplace_back(rankToJoin);
         return;
     }
@@ -68,6 +71,10 @@ void InterJobCommunicator::setGroupId(int group_id) {
 
 bool InterJobCommunicator::partOfRing() {
     return _next_ring_member_rank != -1;
+}
+
+int InterJobCommunicator::getNextRingMemberRank() {
+    return _next_ring_member_rank;
 }
 
 InterJobCommunicator::InterJobCommunicator() = default;

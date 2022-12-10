@@ -13,6 +13,9 @@
 #include "comm/async_collective.hpp"
 #include "util/sys/threading.hpp"
 #include "cross_instance_clause_sharing/group_sharing_map.hpp"
+#include "cross_instance_clause_sharing/inter_job_communicator.hpp"
+#include "comm/msg_queue/message_subscription.hpp"
+#include "data/job_transfer.hpp"
 
 // String wrapper with concatenation as an aggregation operation.
 // Note that this is a non-commutative operation.
@@ -541,6 +544,67 @@ void testGroupSharingMap() {
     assert(m1.data[4].first == 6);
 }
 
+void testGroupSharingMap2() {
+    MPI_Comm comm = MPI_COMM_WORLD;
+    int rank = MyMpi::rank(comm);
+    auto &q = MyMpi::getMessageQueue();
+    Terminator::reset();
+
+    AsyncCollective<GroupSharingMap> allRed(comm, q, reductionInstanceCounter++);
+    MPI_Barrier(MPI_COMM_WORLD);
+
+    InterJobCommunicator ijc;
+    int group_id = rank % 2;
+    ijc.setGroupId(group_id);
+    GroupSharingMap contribution({{group_id, {rank, false}}});
+
+    allRed.allReduce(reductionCallCounter++, contribution, [&](std::list<GroupSharingMap> &results) {
+        std::map<int, std::pair<int, bool>> reps = results.front().data;
+        assert(reps.size() == 2);
+        assert(reps.at(group_id).first % 2 == rank % 2);
+        Terminator::setTerminating();
+    });
+
+    while (!Terminator::isTerminating() || q.hasOpenSends()) q.advance();
+}
+
+void testIJC() {
+    MPI_Comm comm = MPI_COMM_WORLD;
+    int rank = MyMpi::rank(comm);
+    auto &q = MyMpi::getMessageQueue();
+    Terminator::reset();
+
+    AsyncCollective<GroupSharingMap> allRed(comm, q, reductionInstanceCounter++);
+    MPI_Barrier(MPI_COMM_WORLD);
+
+    InterJobCommunicator ijc;
+    int group_id = rank % 2;
+    ijc.setGroupId(group_id);
+    GroupSharingMap contribution({{group_id, {rank, false}}});
+
+    std::map<int, std::pair<int, bool>> reps;
+    allRed.allReduce(reductionCallCounter++, contribution, [&](std::list<GroupSharingMap> &results) {
+        reps = results.front().data;
+        ijc.gatherIntoRing(reps, reductionCallCounter);
+        for (int i = 0; i < 5000; ++i) MyMpi::getMessageQueue().advance();
+        ijc.handleOpenJoinRingRequests();
+        for (int i = 0; i < 5000; ++i) MyMpi::getMessageQueue().advance();
+        assert(ijc.partOfRing());
+        assert(MyMpi::size(MPI_COMM_WORLD) < 4 | ijc.getNextRingMemberRank() != rank);
+        Terminator::setTerminating();
+    });
+
+    while (!Terminator::isTerminating() || q.hasOpenSends()) q.advance();
+}
+
+void testMessageSubscription(){
+    MessageSubscription x = {1000324, [&](auto &h){std::cout << "i received a msg" << std::endl;}};
+    IntPair dummy_data = {42, 42};
+    MyMpi::isend(MyMpi::rank(MPI_COMM_WORLD), 1000324, dummy_data);
+    for (int i = 0; i < 100; ++i) MyMpi::getMessageQueue().advance();
+}
+
+
 int main(int argc, char *argv[]) {
 
     MyMpi::init();
@@ -556,6 +620,11 @@ int main(int argc, char *argv[]) {
     params.init(argc, argv);
     MyMpi::setOptions(params);
 
+    //testIntegerSum();
+    //testGroupSharingMap2();
+    testIJC();
+    //testMessageSubscription();
+
     /*
     testIntegerSum();
     testStringConcatenation();
@@ -568,7 +637,9 @@ int main(int argc, char *argv[]) {
     testSparsePrefixSum();
     */
 
-    testDifferentialSparsePrefixSum();
+    //testGroupSharingMap();
+
+    //testDifferentialSparsePrefixSum();
 
     // Exit properly
     MPI_Barrier(MPI_COMM_WORLD);
