@@ -78,7 +78,8 @@ int InterJobCommunicator::getNextRingMemberRank() {
 }
 
 void InterJobCommunicator::emitMessageIntoRing(std::vector<uint8_t> &payload) {
-    std::cout << _rank << " is sending" << std::endl;
+    _ring_action.execute(payload);
+    std::cout << _rank << " is emitting to " << _next_ring_member_rank << std::endl;
     auto r = RingMessage(_group_id, _rank, payload);
     MyMpi::isend(_next_ring_member_rank, MSG_RING_MESSAGE, r);
 }
@@ -93,13 +94,17 @@ void InterJobCommunicator::setNextRingMemberRank(int nextRingMemberRank) {
 }
 
 void InterJobCommunicator::forwardRingMessage(MessageHandle &h) {
-    auto r = Serializable::get<RingMessage>(h.getRecvData());
-    assert(Serializable::get<IntVec>(r.payload).data.size() == 1);
-    // std::cout << _rank << " received " << Serializable::get<IntVec>(r.payload).data.front() << std::endl;
-    // std::cout << _rank << " received. Forward? " << (r.msg_start_rank == _rank ? "no" : "yes") << std::endl;
-    if (r.group_id != _group_id) return;
-    if (r.msg_start_rank == _rank) return;
-    MyMpi::isend(_next_ring_member_rank, MSG_RING_MESSAGE, r);
+    auto ring_message = Serializable::get<RingMessage>(h.getRecvData());
+    // std::cout << _rank << " received " << Serializable::get<IntVec>(ring_message.payload).data.front() << std::endl;
+    // std::cout << _rank << " received. Forward? " << (ring_message.msg_start_rank == _next_ring_member_rank ? "no" : "yes") << std::endl;
+    if (ring_message.group_id != _group_id) return;
+    _ring_action.execute(ring_message.payload);
+    if (ring_message.msg_start_rank == _next_ring_member_rank) return;
+    MyMpi::isend(_next_ring_member_rank, MSG_RING_MESSAGE, ring_message);
+}
+
+void InterJobCommunicator::setRingAction(RingAction &ringAction) {
+    _ring_action = ringAction;
 }
 
 InterJobCommunicator::InterJobCommunicator() = default;
