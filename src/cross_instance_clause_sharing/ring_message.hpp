@@ -5,6 +5,8 @@ struct RingMessage : Serializable {
     int msg_start_rank;
     std::vector<uint8_t> payload;
 
+    RingMessage() = default;
+
     RingMessage(int groupId, int msgStartRank, const std::vector<uint8_t> &payload) : group_id(groupId),
                                                                                       msg_start_rank(msgStartRank),
                                                                                       payload(payload) {}

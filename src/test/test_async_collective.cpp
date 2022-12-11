@@ -597,11 +597,22 @@ void testIJC() {
     while (!Terminator::isTerminating() || q.hasOpenSends()) q.advance();
 }
 
-void testMessageSubscription(){
-    MessageSubscription x = {1000324, [&](auto &h){std::cout << "i received a msg" << std::endl;}};
-    IntPair dummy_data = {42, 42};
-    MyMpi::isend(MyMpi::rank(MPI_COMM_WORLD), 1000324, dummy_data);
-    for (int i = 0; i < 100; ++i) MyMpi::getMessageQueue().advance();
+void testMessagePassing() {
+    auto comm = MPI_COMM_WORLD;
+    auto size = MyMpi::size(comm);
+    auto rank = MyMpi::rank(comm);
+    assert(size >= 4);
+
+    auto group_id = rank % 2;
+    InterJobCommunicator ipc;
+    ipc.setGroupId(group_id);
+    ipc.setNextRingMemberRank((rank + 2) % size);
+    std::cout << rank << " → " << ipc.getNextRingMemberRank() << std::endl;
+    MPI_Barrier(comm);
+
+    auto x = IntVec({1});
+    ipc.emitMessageIntoRing(x);
+    for (int i = 0; i < 40000; ++i) MyMpi::getMessageQueue().advance();
 }
 
 
@@ -622,8 +633,9 @@ int main(int argc, char *argv[]) {
 
     //testIntegerSum();
     //testGroupSharingMap2();
-    testIJC();
+    //testIJC();
     //testMessageSubscription();
+    testMessagePassing();
 
     /*
     testIntegerSum();

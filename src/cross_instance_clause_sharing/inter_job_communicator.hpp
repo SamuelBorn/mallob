@@ -1,13 +1,15 @@
 #pragma once
 
 #include "comm/msg_queue/message_subscription.hpp"
+#include "ring_message.hpp"
 #include <iostream>
 
 class InterJobCommunicator {
 
 private:
-    MessageSubscription _join_ring_request_subscription = MessageSubscription(MSG_JOIN_RING_REQUEST, [&](auto &h) { handleJoinRingRequest(h); });
-    MessageSubscription _join_ring_request_accept_subscription = MessageSubscription(MSG_JOIN_RING_REQUEST_ACCEPT, [&](auto &h) { handleJoinRingRequestAccept(h); });
+    MessageSubscription _join_ring_request_subscription = {MSG_JOIN_RING_REQUEST, [&](auto &h) { handleJoinRingRequest(h); }};
+    MessageSubscription _join_ring_request_accept_subscription = {MSG_JOIN_RING_REQUEST_ACCEPT, [&](auto &h) { handleJoinRingRequestAccept(h); }};
+    MessageSubscription _pass_ring_message_subscription = {MSG_RING_MESSAGE, [&](auto &h) { forwardRingMessage(h); }};
     int _next_ring_member_rank = -1;
     int _group_id = -2;  // group_id of -1 indicates that no group id is set;
     int _reduction_call_counter = -1;
@@ -27,14 +29,22 @@ public:
 
     int getNextRingMemberRank();
 
+    void setNextRingMemberRank(int nextRingMemberRank);
+
+    void emitMessageIntoRing(Serializable &s);
+
+    void emitMessageIntoRing(std::vector<uint8_t> &payload);
+
 private:
+    bool createNewRing(std::map<int, std::pair<int, bool>> &reps);
+
+    void acceptIntoRing(int rankToJoin);
+
     void handleJoinRingRequest(MessageHandle &h);
 
     void handleJoinRingRequestAccept(MessageHandle &h);
 
-    bool createNewRing(std::map<int, std::pair<int, bool>> &reps);
-
-    void acceptIntoRing(int rankToJoin);
+    void forwardRingMessage(MessageHandle &h);
 };
 
 
