@@ -78,7 +78,6 @@ int InterJobCommunicator::getNextRingMemberRank() {
 }
 
 void InterJobCommunicator::emitMessageIntoRing(std::vector<uint8_t> &payload) {
-    _ring_action.execute(payload);
     std::cout << _rank << " is emitting to " << _next_ring_member_rank << std::endl;
     auto r = RingMessage(_group_id, _rank, payload);
     MyMpi::isend(_next_ring_member_rank, MSG_RING_MESSAGE, r);

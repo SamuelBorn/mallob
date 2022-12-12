@@ -11,11 +11,13 @@
 #include "util/sys/process.hpp"
 #include "sat_process_config.hpp"
 #include "util/sys/thread_pool.hpp"
+#include "app/sat/sharing/buffer/buffer_reducer.hpp"
 
 std::atomic_int ForkedSatJob::_static_subprocess_index = 1;
 
 ForkedSatJob::ForkedSatJob(const Parameters& params, const JobSetup& setup) : 
         BaseSatJob(params, setup) {
+    getInterJobCommunicator().setRingAction(_ring_action);
 }
 
 void ForkedSatJob::appl_start() {
@@ -213,6 +215,7 @@ std::pair<int, int> ForkedSatJob::getLastAdmittedClauseShare() {
 void ForkedSatJob::filterSharing(std::vector<int>& clauses) {
     if (!_initialized) return;
     _solver->filterClauses(clauses);
+    _stored_clauses = clauses;
 }
 bool ForkedSatJob::hasFilteredSharing() {
     if (!_initialized) return false;
@@ -225,6 +228,28 @@ std::vector<int> ForkedSatJob::getLocalFilter() {
 void ForkedSatJob::applyFilter(std::vector<int>& filter) {
     if (!_initialized) return;
     _solver->applyFilter(filter);
+    applyFilterToLocalClauses(filter);
+    getInterJobCommunicator().emitMessageIntoRing(_stored_clauses);
+}
+
+void ForkedSatJob::applyFilterToLocalClauses(std::vector<int> &filter) {
+    int* buffer = _stored_clauses.data.data();
+    int buflen = _stored_clauses.data.size();
+    const int bitsPerElem = sizeof(int)*8;
+    int shift = bitsPerElem;
+    int filterPos = -1;
+    BufferReducer reducer(buffer, buflen, _params.strictClauseLengthLimit(), _params.groupClausesByLengthLbdSum());
+    buflen = reducer.reduce([&]() {
+        if (shift == bitsPerElem) {
+            filterPos++;
+            shift = 0;
+        }
+        bool admitted = ((filter[filterPos] & (1 << shift)) == 0);
+        shift++;
+        return admitted;
+    });
+    assert(_stored_clauses.data.size() >= buflen);
+    _stored_clauses.data.resize(buflen);
 }
 
 void ForkedSatJob::digestSharingWithoutFilter(std::vector<int>& clauses) {

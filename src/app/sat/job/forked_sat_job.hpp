@@ -33,6 +33,9 @@ private:
     std::atomic_bool _done_locally = false;
     JobResult _internal_result;
 
+    ApplyClausesRingAction _ring_action;
+    IntVec _stored_clauses;
+
 public:
 
     ForkedSatJob(const Parameters& params, const JobSetup& setup);
@@ -80,4 +83,5 @@ private:
     void loadIncrements();
     void startDestructThreadIfNecessary();
 
+    void applyFilterToLocalClauses(std::vector<int>& filter);
 };
