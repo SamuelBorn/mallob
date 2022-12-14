@@ -12,7 +12,7 @@ private:
     MessageSubscription _join_ring_request_accept_subscription = {MSG_JOIN_RING_REQUEST_ACCEPT, [&](auto &h) { handleJoinRingRequestAccept(h); }};
     MessageSubscription _pass_ring_message_subscription = {MSG_RING_MESSAGE, [&](auto &h) { forwardRingMessage(h); }};
     NOPRingAction _default_action;
-    RingAction &_ring_action = _default_action;
+    std::unique_ptr<RingAction> _ring_action;
     int _next_ring_member_rank = -1;
     int _group_id = -2;  // group_id of -1 indicates that no group id is set;
     int _reduction_call_counter = -1;
@@ -38,7 +38,7 @@ public:
 
     void emitMessageIntoRing(std::vector<uint8_t> &payload);
 
-    void setRingAction(RingAction &ringAction);
+    void setRingAction(RingAction *ringAction);
 
 private:
     bool createNewRing(std::map<int, std::pair<int, bool>> &reps);

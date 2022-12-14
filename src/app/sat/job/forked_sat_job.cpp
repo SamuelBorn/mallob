@@ -17,7 +17,7 @@ std::atomic_int ForkedSatJob::_static_subprocess_index = 1;
 
 ForkedSatJob::ForkedSatJob(const Parameters& params, const JobSetup& setup) : 
         BaseSatJob(params, setup) {
-    getInterJobCommunicator().setRingAction(_ring_action);
+    getInterJobCommunicator().setRingAction(new ApplyClausesRingAction());
 }
 
 void ForkedSatJob::appl_start() {
@@ -234,12 +234,12 @@ void ForkedSatJob::applyFilter(std::vector<int>& filter) {
 
 void ForkedSatJob::applyFilterToLocalClauses(std::vector<int> &filter) {
     int* buffer = _stored_clauses.data.data();
-    int buflen = _stored_clauses.data.size();
+    int buffer_size = _stored_clauses.data.size();
     const int bitsPerElem = sizeof(int)*8;
     int shift = bitsPerElem;
     int filterPos = -1;
-    BufferReducer reducer(buffer, buflen, _params.strictClauseLengthLimit(), _params.groupClausesByLengthLbdSum());
-    buflen = reducer.reduce([&]() {
+    BufferReducer reducer(buffer, buffer_size, _params.strictClauseLengthLimit(), _params.groupClausesByLengthLbdSum());
+    int new_buffer_size = reducer.reduce([&]() {
         if (shift == bitsPerElem) {
             filterPos++;
             shift = 0;
@@ -248,8 +248,8 @@ void ForkedSatJob::applyFilterToLocalClauses(std::vector<int> &filter) {
         shift++;
         return admitted;
     });
-    assert(_stored_clauses.data.size() >= buflen);
-    _stored_clauses.data.resize(buflen);
+    assert(_stored_clauses.data.size() >= new_buffer_size);
+    _stored_clauses.data.resize(new_buffer_size);
 }
 
 void ForkedSatJob::digestSharingWithoutFilter(std::vector<int>& clauses) {
