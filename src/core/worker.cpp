@@ -17,7 +17,7 @@
 #include "util/sys/terminator.hpp"
 #include "util/sys/thread_pool.hpp"
 #include "comm/message_warmup.hpp"
-#include "cross_instance_clause_sharing/group_sharing_map.hpp"
+#include "cross_problem_clause_sharing/group_sharing_map.hpp"
 #include "comm/async_collective_tags.hpp"
 
 Worker::Worker(MPI_Comm comm, Parameters& params) :

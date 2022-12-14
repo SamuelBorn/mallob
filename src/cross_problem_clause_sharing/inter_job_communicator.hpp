@@ -3,7 +3,7 @@
 #include "comm/msg_queue/message_subscription.hpp"
 #include "ring_message.hpp"
 #include <iostream>
-#include "cross_instance_clause_sharing/ring_actions.hpp"
+#include "cross_problem_clause_sharing/ring_actions.hpp"
 
 class InterJobCommunicator {
 

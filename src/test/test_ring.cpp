@@ -12,8 +12,8 @@
 #include "util/params.hpp"
 #include "comm/async_collective.hpp"
 #include "util/sys/threading.hpp"
-#include "cross_instance_clause_sharing/group_sharing_map.hpp"
-#include "cross_instance_clause_sharing/inter_job_communicator.hpp"
+#include "cross_problem_clause_sharing/group_sharing_map.hpp"
+#include "cross_problem_clause_sharing/inter_job_communicator.hpp"
 #include "comm/msg_queue/message_subscription.hpp"
 #include "data/job_transfer.hpp"
 
