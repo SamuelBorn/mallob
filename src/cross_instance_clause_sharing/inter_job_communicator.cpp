@@ -30,6 +30,7 @@ void InterJobCommunicator::handleOpenJoinRingRequests() {
     for (const auto &rankToJoin: _open_join_request_ranks) {
         acceptIntoRing(rankToJoin);
     }
+    _open_join_request_ranks.clear();
 }
 
 void InterJobCommunicator::handleJoinRingRequest(MessageHandle &h) {
