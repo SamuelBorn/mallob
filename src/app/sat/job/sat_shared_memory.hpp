@@ -62,4 +62,6 @@ struct SatSharedMemory {
     int filterSize;
     int lastNumClausesToImport;
     int lastNumAdmittedClausesToImport;
+
+    bool sameProblemJustDifferentAssumptions;
 };

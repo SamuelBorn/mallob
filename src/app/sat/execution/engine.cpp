@@ -25,7 +25,7 @@
 
 using namespace SolvingStates;
 
-SatEngine::SatEngine(const Parameters& params, const SatProcessConfig& config, Logger& loggingInterface) : 
+SatEngine::SatEngine(const Parameters& params, const SatProcessConfig& config, Logger& loggingInterface) :
 			_params(params), _config(config), _logger(loggingInterface), _state(INITIALIZING) {
 	
     int appRank = config.apprank;
@@ -106,6 +106,7 @@ SatEngine::SatEngine(const Parameters& params, const SatProcessConfig& config, L
 		_solver_interfaces.emplace_back(createSolver(setup));
 		cyclePos = (cyclePos+1) % solverChoices.size();
 	}
+    _external_clause_checker.reset(new Cadical(setup));
 
 	_sharing_manager.reset(new SharingManager(_solver_interfaces, _params, _logger, 
 		/*max. deferred literals per solver=*/5*config.maxBroadcastedLitsPerCycle, config.apprank));
@@ -385,4 +386,16 @@ void SatEngine::cleanUp() {
 
 SatEngine::~SatEngine() {
 	if (!_cleaned_up) cleanUp();
+}
+
+void SatEngine::populateExternalClauseChecker(int *begin_clauses, size_t size) {
+    _external_clause_checker.reset();
+    for (int i = 0; i < size; ++i) {
+        _external_clause_checker->addLiteral(begin_clauses[i]);
+    }
+}
+
+bool SatEngine::checkIfClauseIsApplicable(int *begin_assumptions, size_t size) {
+    SatResult x = _external_clause_checker->solve(size, begin_assumptions);
+    return x == SatResult::UNSAT;
 }

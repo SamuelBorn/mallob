@@ -53,6 +53,28 @@ public:
         _checksum = params.useChecksums() ? new Checksum() : nullptr;
     }
 
+    void checkIfExternalClausesAreApplicable() {
+        _engine.populateExternalClauseChecker(_import_buffer, _hsm->importBufferSize);
+        for (int i = 0; i < _hsm->externalClausesBufferSize; ++i) {
+            std::vector<int> assumptions;
+            while (i < _hsm->externalClausesBufferSize && _external_clauses_buffer[i] != 0){
+                assumptions.push_back(_external_clauses_buffer[i]);
+                assumptions.push_back(0);
+                i++;
+            }
+            i++;
+            bool clauseIsApplicable = _hsm->sameProblemJustDifferentAssumptions &&
+                    _engine.checkIfClauseIsApplicable(assumptions.data(), assumptions.size());
+            if (clauseIsApplicable){
+                importExternalClause();
+            }
+        }
+    }
+
+    void importExternalClause() {
+
+    }
+
     void run() {
         // Wait until everything is prepared for the solver to begin
         while (!_hsm->doBegin) doSleep();
@@ -111,9 +133,9 @@ public:
             // Read new revisions as necessary
             importRevisions();
 
-            // Import external clauses
+            // Import different problem clauses
             if (_hsm->doImportExternalClauses && !_hsm->didImportExternalClauses) {
-                //TODO
+                checkIfExternalClausesAreApplicable();
                 _hsm->didImportExternalClauses = true;
             }
             if (!_hsm->doImportExternalClauses) _hsm->didImportExternalClauses = false;

@@ -14,6 +14,7 @@
 #include "data/checksum.hpp"
 #include "data/job_result.hpp"
 #include "../job/sat_process_config.hpp"
+#include "app/sat/solvers/cadical.hpp"
 
 class SatEngine {
 
@@ -30,6 +31,8 @@ private:
 	std::vector<std::shared_ptr<PortfolioSolverInterface>> _solver_interfaces;
 	std::vector<std::shared_ptr<SolverThread>> _solver_threads;
 	std::vector<std::shared_ptr<SolverThread>> _obsolete_solver_threads;
+
+    std::shared_ptr<PortfolioSolverInterface> _external_clause_checker;
 
 	struct RevisionData {
 		size_t fSize;
@@ -82,6 +85,9 @@ public:
 
 	void cleanUp();
 	bool isCleanedUp() {return _cleaned_up;}
+
+    void populateExternalClauseChecker(int* begin_clauses, size_t size);
+    bool checkIfClauseIsApplicable(int* begin_assumptions, size_t size);
 
 private:
 

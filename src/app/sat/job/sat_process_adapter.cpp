@@ -274,6 +274,7 @@ bool SatProcessAdapter::process(const std::vector<int>& buffer, BufferTask task)
 }
 
 void SatProcessAdapter::includeExternalProblemClauses(const std::vector<int> &clauses) {
+    _hsm->sameProblemJustDifferentAssumptions = false;
     if (!process(clauses, IMPORT_EXTERNAL_CLAUSES)) _pending_tasks.emplace_back(clauses, IMPORT_EXTERNAL_CLAUSES);
 }
 
