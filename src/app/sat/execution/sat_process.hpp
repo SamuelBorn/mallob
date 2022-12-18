@@ -35,6 +35,7 @@ private:
     int* _import_buffer;
     int* _filter_buffer;
     int* _returned_buffer;
+    int* _external_clauses_buffer;
 
     int _last_imported_revision;
     int _desired_revision;
@@ -69,6 +70,7 @@ public:
             int maxFilterSize = _hsm->importBufferMaxSize/8 + 1;
             _filter_buffer = (int*) accessMemory(_shmem_id + ".clausefilter", maxFilterSize);
             _returned_buffer = (int*) accessMemory(_shmem_id + ".returnedclauses", maxImportBufferSize);
+            _external_clauses_buffer = (int*) accessMemory(_shmem_id + ".externalclauses", maxExportBufferSize);
         }
 
         // Import first revision
@@ -108,6 +110,13 @@ public:
 
             // Read new revisions as necessary
             importRevisions();
+
+            // Import external clauses
+            if (_hsm->doImportExternalClauses && !_hsm->didImportExternalClauses) {
+                //TODO
+                _hsm->didImportExternalClauses = true;
+            }
+            if (!_hsm->doImportExternalClauses) _hsm->didImportExternalClauses = false;
 
             // Dump stats
             if (_hsm->doDumpStats && !_hsm->didDumpStats) {

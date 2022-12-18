@@ -93,6 +93,7 @@ void SatProcessAdapter::doInitialize() {
     _hsm->doDumpStats = false;
     _hsm->doStartNextRevision = false;
     _hsm->doTerminate = false;
+    _hsm->doImportExternalClauses = false;
     _hsm->exportBufferMaxSize = 0;
     _hsm->importBufferSize = 0;
     _hsm->didExport = false;
@@ -102,6 +103,7 @@ void SatProcessAdapter::doInitialize() {
     _hsm->didDumpStats = false;
     _hsm->didStartNextRevision = false;
     _hsm->didTerminate = false;
+    _hsm->didImportExternalClauses = false;
     _hsm->isInitialized = false;
     _hsm->hasSolution = false;
     _hsm->result = UNKNOWN;
@@ -118,6 +120,7 @@ void SatProcessAdapter::doInitialize() {
         _hsm->config.mpisize, _params.clauseBufferBaseSize(), _params.clauseBufferDiscountFactor(), 
         MyMpi::ALL
     ) + 1024;
+    _hsm->externalClausesBufferMaxSize = _hsm->importBufferMaxSize;
     _export_buffer = (int*) createSharedMemoryBlock("clauseexport", 
             sizeof(int)*_hsm->exportBufferAllocatedSize, nullptr);
     _import_buffer = (int*) createSharedMemoryBlock("clauseimport", 
@@ -125,6 +128,8 @@ void SatProcessAdapter::doInitialize() {
     _filter_buffer = (int*) createSharedMemoryBlock("clausefilter", 
             _hsm->importBufferMaxSize/8 + 1, nullptr);
     _returned_buffer = (int*) createSharedMemoryBlock("returnedclauses",
+            sizeof(int)*_hsm->importBufferMaxSize, nullptr);
+    _external_clauses_buffer = (int*) createSharedMemoryBlock("externalclauses",
             sizeof(int)*_hsm->importBufferMaxSize, nullptr);
 
     // Allocate shared memory for formula, assumptions of initial revision
@@ -257,10 +262,19 @@ bool SatProcessAdapter::process(const std::vector<int>& buffer, BufferTask task)
         assert(_hsm->importBufferSize <= _hsm->importBufferMaxSize);
         memcpy(_import_buffer, buffer.data(), buffer.size()*sizeof(int));
         _hsm->doDigestImportWithoutFilter = true;
+    } else if (task == IMPORT_EXTERNAL_CLAUSES) {
+        _hsm->externalClausesBufferSize = buffer.size();
+        assert(_hsm->externalClausesBufferSize <= _hsm->externalClausesBufferMaxSize);
+        memcpy(_external_clauses_buffer, buffer.data(), buffer.size()*sizeof(int));
+        _hsm->doImportExternalClauses = true;
     }
 
     if (_hsm->isInitialized) Process::wakeUp(_child_pid);
     return true;
+}
+
+void SatProcessAdapter::includeExternalProblemClauses(const std::vector<int> &clauses) {
+    if (!process(clauses, IMPORT_EXTERNAL_CLAUSES)) _pending_tasks.emplace_back(clauses, IMPORT_EXTERNAL_CLAUSES);
 }
 
 void SatProcessAdapter::filterClauses(const std::vector<int>& clauses) {
@@ -330,6 +344,7 @@ SatProcessAdapter::SubprocessStatus SatProcessAdapter::check() {
 
     doWriteRevisions();
 
+    if (_hsm->didImportExternalClauses) _hsm->doImportExternalClauses = false;
     if (_hsm->didReturnClauses)     _hsm->doReturnClauses     = false;
     if (_hsm->didStartNextRevision) _hsm->doStartNextRevision = false;
     if (_hsm->didDumpStats)         _hsm->doDumpStats         = false;
@@ -426,6 +441,17 @@ void* SatProcessAdapter::createSharedMemoryBlock(std::string shmemSubId, size_t 
     _shmem.insert(ShmemObject{id, shmem, size});
     //log(V4_VVER, "DBG set up shmem %s\n", id.c_str());
     return shmem;
+}
+
+bool SatProcessAdapter::freeSharedMemoryBlock(const std::string& shmemSubId) {
+    for (auto& shmemObj : _shmem) {
+        std::string id = _shmem_id + "." + shmemSubId;
+        if(id == shmemObj.id){
+            SharedMemory::free(shmemObj.id, (char*)shmemObj.data, shmemObj.size);
+            return true;
+        }
+    }
+    return false;
 }
 
 void SatProcessAdapter::crash() {

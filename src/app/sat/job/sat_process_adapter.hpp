@@ -73,7 +73,8 @@ private:
     int* _import_buffer;
     int* _filter_buffer;
     int* _returned_buffer;
-    enum BufferTask {FILTER_CLAUSES, APPLY_FILTER, DIGEST_WITHOUT_FILTER};
+    int* _external_clauses_buffer;
+    enum BufferTask {FILTER_CLAUSES, APPLY_FILTER, DIGEST_WITHOUT_FILTER, IMPORT_EXTERNAL_CLAUSES};
     std::list<std::pair<std::vector<int>, BufferTask>> _pending_tasks;
     std::list<std::vector<int>> _temp_returned_clauses;
     std::pair<int, int> _last_admitted_clause_share;
@@ -122,6 +123,7 @@ public:
     bool hasFilteredClauses();
     std::vector<int> getLocalFilter();
 
+    void includeExternalProblemClauses(const std::vector<int>& clauses);
     void applyFilter(const std::vector<int>& filter);
     void digestClausesWithoutFilter(const std::vector<int>& clauses);
     void returnClauses(const std::vector<int>& clauses);
@@ -147,4 +149,5 @@ private:
     void initSharedMemory(SatProcessConfig&& config);
     void* createSharedMemoryBlock(std::string shmemSubId, size_t size, void* data);
 
+    bool freeSharedMemoryBlock(const std::string& shmemSubId);
 };
