@@ -277,6 +277,11 @@ void ForkedSatJob::startDestructThreadIfNecessary() {
     }
 }
 
+void ForkedSatJob::includeExternalProblemClauses(std::vector<int> &clauses) {
+    if (!_initialized) return;
+    _solver->includeExternalProblemClauses(clauses);
+}
+
 ForkedSatJob::~ForkedSatJob() {
     LOG(V5_DEBG, "%s : enter FSJ destructor\n", toStr());
 

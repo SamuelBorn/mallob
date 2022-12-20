@@ -75,6 +75,7 @@ public:
     virtual void digestSharingWithoutFilter(std::vector<int>& clauses) override;
     void returnClauses(std::vector<int>& clauses) override;
 
+    void includeExternalProblemClauses(std::vector<int> &clauses);
 private:
     void doStartSolver();
 
