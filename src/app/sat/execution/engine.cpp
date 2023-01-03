@@ -393,7 +393,7 @@ void SatEngine::populateExternalClauseChecker(int *begin_clauses, size_t size) {
 //    for (int i = 0; i < size; ++i) {
 //        _external_clause_checker_OLD->addLiteral(begin_clauses[i]);
 //    }
-    _external_clause_checker.insertExternalClausesToCheck(begin_clauses, size)
+    _external_clause_checker.insertExternalClausesToCheck(begin_clauses, size);
 }
 
 bool SatEngine::checkIfClauseIsApplicable(int *begin_assumptions, size_t size) {

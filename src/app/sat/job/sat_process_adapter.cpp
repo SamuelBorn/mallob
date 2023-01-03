@@ -241,7 +241,7 @@ std::pair<int, int> SatProcessAdapter::getLastAdmittedClauseShare() {
 
 bool SatProcessAdapter::process(const std::vector<int>& buffer, BufferTask task) {
 
-    if (!_initialized || _hsm->doFilterImport || _hsm->doDigestImportWithFilter || _hsm->doDigestImportWithoutFilter) {
+    if (!_initialized || _hsm->doFilterImport || _hsm->doDigestImportWithFilter || _hsm->doDigestImportWithoutFilter || _hsm->doImportExternalClauses) {
         return false;
     }
 
