@@ -17,10 +17,10 @@ std::atomic_int ForkedSatJob::_static_subprocess_index = 1;
 
 ForkedSatJob::ForkedSatJob(const Parameters& params, const JobSetup& setup) : 
         BaseSatJob(params, setup) {
-    //getInterJobCommunicator().setRingAction(new ApplyClausesRingAction());
-    getInterJobCommunicator().setRingAction([&](RingMessage msg){
-        //_solver->includeExternalProblemClauses({1});
-        std::cout << "Neue Ring Action!! "<< _solver->hasClauseComm()  << std::endl;
+    getInterJobCommunicator().setRingAction([&](RingMessage &msg) {
+        std::vector<int> clauses(msg.payload.size() / sizeof(int));
+        memcpy(clauses.data(), msg.payload.data(), msg.payload.size());
+        _solver->includeExternalProblemClauses(clauses);
     });
 }
 
