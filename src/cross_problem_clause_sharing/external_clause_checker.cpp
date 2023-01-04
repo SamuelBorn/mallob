@@ -15,5 +15,4 @@ void ExternalClauseChecker::insertExternalClausesToCheck(int *clauses, size_t si
 
 }
 
-ExternalClauseChecker::ExternalClauseChecker(const Parameters &params, const SatProcessConfig &config, const std::shared_ptr<PortfolioSolverInterface> &solver, size_t fSize, const int *fLits, size_t aSize, const int *aLits, int localId) : SolverThread(params, config, solver, fSize, fLits, aSize,
-                                                                                                                                                                                                                                                            aLits, localId) {}
+ExternalClauseChecker::ExternalClauseChecker() {}

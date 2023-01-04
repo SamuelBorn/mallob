@@ -1,7 +1,6 @@
 #include "app/sat/execution/solver_thread.hpp"
-#include "app/sat/execution/solver_thread.hpp"
 
-class ExternalClauseChecker : public SolverThread {
+class ExternalClauseChecker {
 
 private:
     std::list<Clause> _clauses_to_check;
@@ -11,7 +10,7 @@ private:
     Mutex _admitted_clauses_mutex;
 
 public:
-    ExternalClauseChecker(const Parameters &params, const SatProcessConfig &config, const std::shared_ptr<PortfolioSolverInterface> &solver, size_t fSize, const int *fLits, size_t aSize, const int *aLits, int localId);
+    ExternalClauseChecker();
 
 public:
     std::list<Clause> getAdmittedExternalClauses();

@@ -110,6 +110,9 @@ void testMessagePassing() {
     InterJobCommunicator ipc;
     ipc.setGroupId(group_id);
     ipc.setNextRingMemberRank((rank + 2) % size);
+    ipc.setRingAction([&](RingMessage msg) {
+        std::cout << "Ring Action executed" << std::endl;
+    });
     MPI_Barrier(comm);
 
     auto x = IntVec({1});
@@ -117,7 +120,7 @@ void testMessagePassing() {
     while (MyMpi::getMessageQueue().hasOpenSends()) MyMpi::getMessageQueue().advance();
     auto begin = std::chrono::steady_clock::now();
     auto end = std::chrono::steady_clock::now();
-    while (std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() < 1000){
+    while (std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() < 1000) {
         end = std::chrono::steady_clock::now();
         MyMpi::getMessageQueue().advance();
     }
