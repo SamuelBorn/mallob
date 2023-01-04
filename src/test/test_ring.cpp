@@ -126,6 +126,17 @@ void testMessagePassing() {
     }
 }
 
+void testRingMessage() {
+    RingMessage r = {1, 2, {0, 1, 2, 3}};
+    RingMessage rs;
+    rs.deserialize(r.serialize());
+    assert(r.group_id == 1);
+    assert(r.msg_start_rank == 2);
+    assert(r.payload.size() == 4);
+    for (int i = 0; i < 4; ++i) {
+        assert((int) r.payload.at(i) == i);
+    }
+}
 
 int main(int argc, char *argv[]) {
 
@@ -145,7 +156,8 @@ int main(int argc, char *argv[]) {
     //testIntegerSum();
     //testGroupSharingMap2();
     //testIJC();
-    testMessagePassing();;
+    //testMessagePassing();;
+    testRingMessage();
 
     // Exit properly
     MPI_Barrier(MPI_COMM_WORLD);
