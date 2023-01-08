@@ -70,4 +70,8 @@ public:
 
 	bool supportsIncrementalSat() override {return true;}
 	bool exportsConditionalClauses() override {return false;}
+
+    void setAllowedConflicts(int conflicts){
+        solver->limit("conflicts", conflicts);
+    }
 };

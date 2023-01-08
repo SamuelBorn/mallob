@@ -20,7 +20,7 @@ ForkedSatJob::ForkedSatJob(const Parameters& params, const JobSetup& setup) :
     getInterJobCommunicator().setRingAction([&](RingMessage &msg) {
         std::vector<int> clauses(msg.payload.size() / sizeof(int));
         memcpy(clauses.data(), msg.payload.data(), msg.payload.size());
-        _solver->includeExternalProblemClauses(clauses);
+        includeExternalProblemClauses(clauses);
     });
 }
 
@@ -282,6 +282,7 @@ void ForkedSatJob::startDestructThreadIfNecessary() {
 }
 
 void ForkedSatJob::includeExternalProblemClauses(std::vector<int> &clauses) {
+    assert(_initialized);
     if (!_initialized) return;
     _solver->includeExternalProblemClauses(clauses);
 }

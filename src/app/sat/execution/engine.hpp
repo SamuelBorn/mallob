@@ -88,8 +88,8 @@ public:
 	void cleanUp();
 	bool isCleanedUp() {return _cleaned_up;}
 
-    void populateExternalClauseChecker(int* begin_clauses, size_t size);
-    bool checkIfClauseIsApplicable(int* begin_assumptions, size_t size);
+    void checkExternalClausesForImport(int *externalClausesBuffer, int externalClausesBufferSize);
+    void incorporateAdmittedExternalClauses();
 
 private:
 

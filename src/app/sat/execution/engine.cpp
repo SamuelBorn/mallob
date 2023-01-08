@@ -106,7 +106,6 @@ SatEngine::SatEngine(const Parameters& params, const SatProcessConfig& config, L
 		_solver_interfaces.emplace_back(createSolver(setup));
 		cyclePos = (cyclePos+1) % solverChoices.size();
 	}
-    _external_clause_checker_OLD.reset(new Cadical(setup));
 
 	_sharing_manager.reset(new SharingManager(_solver_interfaces, _params, _logger, 
 		/*max. deferred literals per solver=*/5*config.maxBroadcastedLitsPerCycle, config.apprank));
@@ -167,6 +166,9 @@ void SatEngine::appendRevision(int revision, size_t fSize, const int* fLits, siz
 	_revision_data.push_back(RevisionData{fSize, fLits, aSize, aLits});
 	_sharing_manager->setRevision(revision);
 	
+    if (revision == 0) {
+        _external_clause_checker.reset(new ExternalClauseChecker(_params, _config, fSize, fLits, aSize, aLits, _num_solvers));
+    }
 	for (size_t i = 0; i < _num_solvers; i++) {
 		if (revision == 0) {
 			// Initialize solver thread
@@ -264,6 +266,8 @@ int SatEngine::solveLoop() {
 }
 
 int SatEngine::prepareSharing(int* begin, int maxSize) {
+    incorporateAdmittedExternalClauses();
+
 	if (isCleanedUp()) return sizeof(size_t) / sizeof(int); // checksum, nothing else
 	LOGGER(_logger, V5_DEBG, "collecting clauses on this node\n");
 	int size = _sharing_manager->prepareSharing(begin, maxSize);
@@ -388,15 +392,12 @@ SatEngine::~SatEngine() {
 	if (!_cleaned_up) cleanUp();
 }
 
-void SatEngine::populateExternalClauseChecker(int *begin_clauses, size_t size) {
-//    _external_clause_checker_OLD.reset();
-//    for (int i = 0; i < size; ++i) {
-//        _external_clause_checker_OLD->addLiteral(begin_clauses[i]);
-//    }
-    _external_clause_checker.insertExternalClausesToCheck(begin_clauses, size);
+void SatEngine::checkExternalClausesForImport(int *externalClausesBuffer, int externalClausesBufferSize) {
+    _external_clause_checker->submitClausesForTesting(externalClausesBuffer, externalClausesBufferSize);
 }
 
-bool SatEngine::checkIfClauseIsApplicable(int *begin_assumptions, size_t size) {
-    SatResult x = _external_clause_checker_OLD->solve(size, begin_assumptions);
-    return x == SatResult::UNSAT;
+void SatEngine::incorporateAdmittedExternalClauses() {
+    auto clauses = _external_clause_checker->fetchAdmittedClauses();
+    if (clauses.empty()) return;
+    digestSharingWithoutFilter(clauses.data(), clauses.size());
 }
