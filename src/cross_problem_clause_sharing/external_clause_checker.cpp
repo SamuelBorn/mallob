@@ -399,7 +399,7 @@ void ExternalClauseChecker::submitClausesForTesting(int *externalClausesBuffer, 
     }
 }
 
-std::vector<int> ExternalClauseChecker::fetchAdmittedClauses() {
+std::vector<int>&& ExternalClauseChecker::fetchAdmittedClauses() {
     auto lock = _admitted_clauses_mutex.getLock();
 
     std::vector<int> buffer;

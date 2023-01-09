@@ -103,7 +103,7 @@ public:
     int getActiveRevision() const {return _active_revision;}
 
     void submitClausesForTesting(int *externalClausesBuffer, int externalClausesBufferSize);
-    std::vector<int> fetchAdmittedClauses();
+    std::vector<int>&& fetchAdmittedClauses();
 
 private:
     void init();
