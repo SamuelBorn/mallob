@@ -240,61 +240,47 @@ void ExternalClauseChecker::diversifyAfterReading() {
 
 void ExternalClauseChecker::runOnce() {
 
-    // Set up correct solver state (or return if not possible)
-    size_t aSize;
-    const int *aLits;
-    int revision;
-    {
-        auto lock = _state_mutex.getLock();
+    auto clause = _clauses_to_check.begin();
+    while (clause != _clauses_to_check.end()) {
+        size_t aSize = clause->size;
+        int aLitsArray[aSize];
+        int *aLits = aLitsArray;
 
-        // Last point where upcoming solving attempt may be cancelled prematurely
-        if (_suspended) return;
+        {
+            auto lock = _state_mutex.getLock();
+            if (_suspended) return;
+            _solver.resume();
 
-        // Make solver ready to solve by removing suspend flag
-        _solver.resume();
-
-        // Set assumptions for upcoming solving attempt, set correct revision
-        auto asmpt = _pending_assumptions.back();
-        aSize = asmpt.first;
-        aLits = asmpt.second;
-        revision = _active_revision;
-    }
-
-    // If necessary, translate assumption literals
-    std::vector<int> tldAssumptions;
-    if (!_vt.getExtraVariables().empty()) {
-        for (size_t i = 0; i < aSize; i++) {
-            tldAssumptions.push_back(_vt.getTldLit(aLits[i]));
+            for (int i = 0; i < aSize; ++i) {
+                aLits[i] = -1 * clause->begin[i];
+            }
         }
-        aLits = tldAssumptions.data();
-    }
 
-    // Perform solving (blocking)
-    LOGGER(_logger, V4_VVER, "BEGSOL rev. %i (%i assumptions)\n", revision, aSize);
-    //std::ofstream ofs("DBG_" + std::to_string(_solver.getGlobalId()) + "_" + std::to_string(_active_revision));
-    //ofs << _dbg_lits << "\n";
-    //ofs.close();
-    SatResult res;
-    if (_solver.supportsIncrementalSat()) {
-        res = _solver.solve(aSize, aLits);
-    } else {
-        // Add assumptions as permanent unit clauses
-        for (const int *aLit = aLits; aLit != aLits + aSize; aLit++) {
-            _solver.addLiteral(*aLit);
-            _solver.addLiteral(0);
+        // If necessary, translate assumption literals
+        std::vector<int> tldAssumptions;
+        if (!_vt.getExtraVariables().empty()) {
+            for (size_t i = 0; i < aSize; i++) {
+                tldAssumptions.push_back(_vt.getTldLit(aLits[i]));
+            }
+            aLits = tldAssumptions.data();
         }
-        res = _solver.solve(0, nullptr);
-    }
-    // Uninterrupt solver (if it was interrupted)
-    {
-        auto lock = _state_mutex.getLock();
-        _solver.uninterrupt();
-        _interrupted = false;
-    }
-    LOGGER(_logger, V4_VVER, "ENDSOL\n");
 
-    // Report result, if present
-    reportResult(res, revision);
+        SatResult res = _solver.solve(aSize, aLits);
+
+        // Un interrupt solver (if it was interrupted)
+        {
+            auto lock = _state_mutex.getLock();
+            _solver.uninterrupt();
+            _interrupted = false;
+        }
+
+        // External clause is applicable -> save to admitted clauses to be fetched later
+        if (res == UNSAT) {
+            _admitted_clauses.push_back(*clause);
+        }
+
+        _clauses_to_check.erase(clause);
+    }
 }
 
 void ExternalClauseChecker::waitWhileSolved() {
@@ -399,7 +385,7 @@ void ExternalClauseChecker::submitClausesForTesting(int *externalClausesBuffer, 
     }
 }
 
-std::vector<int>&& ExternalClauseChecker::fetchAdmittedClauses() {
+std::vector<int> &&ExternalClauseChecker::fetchAdmittedClauses() {
     auto lock = _admitted_clauses_mutex.getLock();
 
     std::vector<int> buffer;
