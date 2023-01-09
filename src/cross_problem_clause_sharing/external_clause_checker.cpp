@@ -346,7 +346,7 @@ Cadical *ExternalClauseChecker::getLocalSolverInterface(const Parameters &params
     SolverSetup setup;
     setup.logger = &_logger;
     setup.jobname = config.getJobStr();
-    setup.isJobIncremental = config.incremental;
+    setup.isJobIncremental = true;  // Cadical supports Incremental
     setup.strictClauseLengthLimit = params.strictClauseLengthLimit();
     setup.strictLbdLimit = params.strictLbdLimit();
     setup.qualityClauseLengthLimit = params.qualityClauseLengthLimit();
