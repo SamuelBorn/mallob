@@ -33,8 +33,7 @@ private:
 	std::vector<std::shared_ptr<SolverThread>> _solver_threads;
 	std::vector<std::shared_ptr<SolverThread>> _obsolete_solver_threads;
 
-    std::shared_ptr<PortfolioSolverInterface> _external_clause_checker_OLD;  // useless
-    ExternalClauseChecker _external_clause_checker;
+    std::shared_ptr<ExternalClauseChecker> _external_clause_checker;
 
 	struct RevisionData {
 		size_t fSize;
