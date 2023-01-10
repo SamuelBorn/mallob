@@ -113,7 +113,7 @@ public:
 
             // Import external problem clauses
             if (_hsm->doImportExternalClauses && !_hsm->didImportExternalClauses) {
-                //_engine.populateExternalClauseChecker(_external_clauses_buffer, _hsm->externalClausesBufferSize);
+                _engine.checkExternalClausesForImport(_external_clauses_buffer, _hsm->externalClausesBufferSize);
                 _hsm->didImportExternalClauses = true;
             }
             if (!_hsm->doImportExternalClauses) _hsm->didImportExternalClauses = false;

@@ -392,7 +392,9 @@ std::vector<int> &&ExternalClauseChecker::fetchAdmittedClauses() {
     auto builder = BufferBuilder(-1, _params.strictClauseLengthLimit(), _params.groupClausesByLengthLbdSum(), &buffer);
     for (const auto &clause: _admitted_clauses) {
         builder.append(clause);
-        free(clause.begin);
+        // free(clause.begin);
+        // TODO: what happens to the malloc of the clause? Maybe free it in digestSharingWithoutFilter
+        // TODO; Maybe copy to Stack?
     }
     _admitted_clauses.clear();
     return builder.extractBuffer();

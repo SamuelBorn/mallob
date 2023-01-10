@@ -79,6 +79,7 @@ int InterJobCommunicator::getNextRingMemberRank() {
 }
 
 void InterJobCommunicator::emitMessageIntoRing(std::vector<uint8_t> &payload) {
+    assert(partOfRing());
     std::cout << _rank << " is emitting to " << _next_ring_member_rank << std::endl;
     auto r = RingMessage(_group_id, _rank, payload);
     MyMpi::isend(_next_ring_member_rank, MSG_RING_MESSAGE, r);
@@ -94,6 +95,7 @@ void InterJobCommunicator::setNextRingMemberRank(int nextRingMemberRank) {
 }
 
 void InterJobCommunicator::forwardRingMessage(MessageHandle &h) {
+    assert(partOfRing());
     auto ring_message = Serializable::get<RingMessage>(h.getRecvData());
     // std::cout << _rank << " received. Forward? " << (ring_message.msg_start_rank == _next_ring_member_rank ? "no" : "yes") << std::endl;
     if (ring_message.group_id != _group_id) return;

@@ -7,16 +7,7 @@
 #include <atomic>
 #include <list>
 
-#include "util/params.hpp"
-#include "util/sys/threading.hpp"
-#include "util/logger.hpp"
-#include "data/job_result.hpp"
-#include "../job/sat_process_config.hpp"
-#include "../solvers/portfolio_solver_interface.hpp"
-#include "solving_state.hpp"
-#include "clause_shuffler.hpp"
-#include "variable_translator.hpp"
-#include "../parse/serialized_formula_parser.hpp"
+#include "app/sat/execution/solver_thread.hpp"
 
 class SatEngine;
 

@@ -233,7 +233,7 @@ void ForkedSatJob::applyFilter(std::vector<int>& filter) {
     if (!_initialized) return;
     _solver->applyFilter(filter);
     applyFilterToLocalClauses(filter);
-    getInterJobCommunicator().emitMessageIntoRing(_stored_clauses);
+    if (getInterJobCommunicator().partOfRing()) getInterJobCommunicator().emitMessageIntoRing(_stored_clauses);
 }
 
 void ForkedSatJob::applyFilterToLocalClauses(std::vector<int> &filter) {
