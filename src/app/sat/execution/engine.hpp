@@ -35,6 +35,8 @@ private:
 
     std::shared_ptr<ExternalClauseChecker> _external_clause_checker;
 
+    SolverSetup _solver_setup;
+
 	struct RevisionData {
 		size_t fSize;
 		const int* fLits;

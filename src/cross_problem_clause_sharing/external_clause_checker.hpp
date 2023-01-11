@@ -7,21 +7,25 @@
 #include <atomic>
 #include <list>
 
+#include "app/sat/solvers/cadical.hpp"
 #include "app/sat/execution/solver_thread.hpp"
+#include "app/sat/data/owned_clause.h"
 
 class SatEngine;
 
 class ExternalClauseChecker {
 
 private:
-    std::list<Clause> _clauses_to_check;
-    std::list<Clause> _admitted_clauses;
+    std::list<OwnedClause> _clauses_to_check;
+    std::list<OwnedClause> _admitted_clauses;
 
     Mutex _clauses_to_check_mutex;
     Mutex _admitted_clauses_mutex;
 
+    std::atomic_int _num_clauses_to_check;
+
     const Parameters& _params;
-    std::shared_ptr<Cadical> _solver_ptr;
+    std::unique_ptr<Cadical> _solver_ptr;
     Cadical& _solver;
     Logger& _logger;
     std::thread _thread;
@@ -56,7 +60,7 @@ private:
     JobResult _result;
 
 public:
-    ExternalClauseChecker(const Parameters& params, const SatProcessConfig& config,
+    ExternalClauseChecker(const Parameters& params, const SatProcessConfig& config,  const SolverSetup &solverSetup,
                  size_t fSize, const int* fLits, size_t aSize, const int* aLits, int localId);
     ~ExternalClauseChecker();
 
@@ -94,7 +98,7 @@ public:
     int getActiveRevision() const {return _active_revision;}
 
     void submitClausesForTesting(int *externalClausesBuffer, int externalClausesBufferSize);
-    std::vector<int>&& fetchAdmittedClauses();
+    std::vector<int> fetchAdmittedClauses();
 
 private:
     void init();
@@ -114,7 +118,7 @@ private:
 
     void reportResult(int res, int revision);
 
-    Cadical* getLocalSolverInterface(const Parameters& params, const SatProcessConfig& config);
+    Cadical* createLocalSolverInterface(const Parameters& params, const SatProcessConfig& config, const SolverSetup solverSetup);
 
     const char* toStr();
 

@@ -88,6 +88,8 @@ SatEngine::SatEngine(const Parameters& params, const SatProcessConfig& config, L
 	setup.numBufferedClsGenerations = params.bufferedImportedClsGenerations();
 	setup.skipClauseSharingDiagonally = true;
 
+    _solver_setup = setup;
+
 	// Instantiate solvers according to the global solver IDs and diversification indices
 	int cyclePos = begunCyclePos;
 	for (setup.localId = 0; setup.localId < _num_solvers; setup.localId++) {
@@ -167,7 +169,7 @@ void SatEngine::appendRevision(int revision, size_t fSize, const int* fLits, siz
 	_sharing_manager->setRevision(revision);
 	
     if (revision == 0) {
-        _external_clause_checker.reset(new ExternalClauseChecker(_params, _config, fSize, fLits, aSize, aLits, _num_solvers));
+        _external_clause_checker.reset(new ExternalClauseChecker(_params, _config, _solver_setup, fSize, fLits, aSize, aLits, _num_solvers));
         _external_clause_checker->start();
     }
 	for (size_t i = 0; i < _num_solvers; i++) {
@@ -267,8 +269,6 @@ int SatEngine::solveLoop() {
 }
 
 int SatEngine::prepareSharing(int* begin, int maxSize) {
-    incorporateAdmittedExternalClauses();
-
 	if (isCleanedUp()) return sizeof(size_t) / sizeof(int); // checksum, nothing else
 	LOGGER(_logger, V5_DEBG, "collecting clauses on this node\n");
 	int size = _sharing_manager->prepareSharing(begin, maxSize);

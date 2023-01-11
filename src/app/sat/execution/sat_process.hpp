@@ -155,6 +155,7 @@ public:
                 // Collect local clauses, put into shared memory
                 _hsm->exportChecksum = Checksum();
                 _hsm->exportBufferTrueSize = _engine.prepareSharing(_export_buffer, _hsm->exportBufferMaxSize);
+                _engine.incorporateAdmittedExternalClauses();
                 auto [admitted, total] = _engine.getLastAdmittedClauseShare();
                 _hsm->lastNumAdmittedClausesToImport = admitted;
                 _hsm->lastNumClausesToImport = total;

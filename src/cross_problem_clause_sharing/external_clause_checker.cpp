@@ -12,9 +12,9 @@ using namespace SolvingStates;
 
 // A GLORIFIED COPY OF SOLVER THREAD
 
-ExternalClauseChecker::ExternalClauseChecker(const Parameters &params, const SatProcessConfig &config,
+ExternalClauseChecker::ExternalClauseChecker(const Parameters &params, const SatProcessConfig &config, const SolverSetup &solverSetup,
                                              size_t fSize, const int *fLits, size_t aSize, const int *aLits, int localId) :
-        _params(params), _solver_ptr(getLocalSolverInterface(params, config)), _solver(*_solver_ptr),
+        _params(params), _solver_ptr(createLocalSolverInterface(params, config, solverSetup)), _solver(*_solver_ptr),
         _logger(_solver.getLogger()), _local_id(localId),
         _has_pseudoincremental_solvers(_solver.getSolverSetup().hasPseudoincrementalSolvers) {
 
@@ -240,9 +240,14 @@ void ExternalClauseChecker::diversifyAfterReading() {
 
 void ExternalClauseChecker::runOnce() {
 
-    auto clause = _clauses_to_check.begin();
-    while (clause != _clauses_to_check.end()) {
-        size_t aSize = clause->size;
+    std::list<OwnedClause>::iterator clause;
+    while (_num_clauses_to_check > 0) {
+        {
+            auto lock = _clauses_to_check_mutex.getLock();
+            clause = _clauses_to_check.begin();
+        }
+
+        size_t aSize = clause->stored_clause.size;
         int aLitsArray[aSize];
         int *aLits = aLitsArray;
 
@@ -252,7 +257,8 @@ void ExternalClauseChecker::runOnce() {
             _solver.resume();
 
             for (int i = 0; i < aSize; ++i) {
-                aLits[i] = -1 * clause->begin[i];
+                if (clause->stored_clause.begin[i] > _max_var) return;
+                aLits[i] = -1 * clause->stored_clause.begin[i];
             }
         }
 
@@ -276,10 +282,15 @@ void ExternalClauseChecker::runOnce() {
 
         // External clause is applicable -> save to admitted clauses to be fetched later
         if (res == UNSAT) {
+            auto lock = _admitted_clauses_mutex.getLock();
             _admitted_clauses.push_back(*clause);
         }
 
-        _clauses_to_check.erase(clause);
+        {
+            auto lock = _clauses_to_check_mutex.getLock();
+            _clauses_to_check.erase(clause);
+            _num_clauses_to_check--;
+        }
     }
 }
 
@@ -342,24 +353,8 @@ void ExternalClauseChecker::reportResult(int res, int revision) {
     _found_result = true;
 }
 
-Cadical *ExternalClauseChecker::getLocalSolverInterface(const Parameters &params, const SatProcessConfig &config) {
-    SolverSetup setup;
-    setup.logger = &_logger;
-    setup.jobname = config.getJobStr();
-    setup.isJobIncremental = true;  // Cadical supports Incremental
-    setup.strictClauseLengthLimit = params.strictClauseLengthLimit();
-    setup.strictLbdLimit = params.strictLbdLimit();
-    setup.qualityClauseLengthLimit = params.qualityClauseLengthLimit();
-    setup.qualityLbdLimit = params.qualityLbdLimit();
-    setup.clauseBaseBufferSize = params.clauseBufferBaseSize();
-    setup.anticipatedLitsToImportPerCycle = config.maxBroadcastedLitsPerCycle;
-    setup.hasPseudoincrementalSolvers = setup.isJobIncremental; // && hasPseudoincrementalSolvers;
-    setup.solverRevision = 0;
-    setup.minNumChunksPerSolver = params.minNumChunksForImportPerSolver();
-    setup.numBufferedClsGenerations = params.bufferedImportedClsGenerations();
-    setup.skipClauseSharingDiagonally = true;
-
-    auto cadical = new Cadical(setup);
+Cadical *ExternalClauseChecker::createLocalSolverInterface(const Parameters &params, const SatProcessConfig &config, const SolverSetup solverSetup) {
+    auto cadical = new Cadical(solverSetup);
     cadical->setAllowedConflicts(0);
     return cadical;
 }
@@ -380,22 +375,21 @@ void ExternalClauseChecker::submitClausesForTesting(int *externalClausesBuffer, 
     auto reader = BufferReader(externalClausesBuffer, externalClausesBufferSize, _params.strictClauseLengthLimit(), _params.groupClausesByLengthLbdSum(), useChecksums);
     Clause c = reader.getNextIncomingClause();
     while (c.begin != nullptr) {
-        _clauses_to_check.push_back(c.copy());
+        auto owned_clause = OwnedClause(c.copy());
+        _clauses_to_check.push_back(owned_clause);
+        _num_clauses_to_check++;
         c = reader.getNextIncomingClause();
     }
 }
 
-std::vector<int> &&ExternalClauseChecker::fetchAdmittedClauses() {
+std::vector<int> ExternalClauseChecker::fetchAdmittedClauses() {
     auto lock = _admitted_clauses_mutex.getLock();
 
     std::vector<int> buffer;
     auto builder = BufferBuilder(-1, _params.strictClauseLengthLimit(), _params.groupClausesByLengthLbdSum(), &buffer);
     for (const auto &clause: _admitted_clauses) {
-        builder.append(clause);
-        // free(clause.begin);
-        // TODO: what happens to the malloc of the clause? Maybe free it in digestSharingWithoutFilter
-        // TODO; Maybe copy to Stack?
+        builder.append(clause.stored_clause);
     }
     _admitted_clauses.clear();
-    return builder.extractBuffer();
+    return buffer;
 }
