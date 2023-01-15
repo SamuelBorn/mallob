@@ -375,8 +375,7 @@ void ExternalClauseChecker::submitClausesForTesting(int *externalClausesBuffer, 
     auto reader = BufferReader(externalClausesBuffer, externalClausesBufferSize, _params.strictClauseLengthLimit(), _params.groupClausesByLengthLbdSum(), useChecksums);
     Clause c = reader.getNextIncomingClause();
     while (c.begin != nullptr) {
-        auto owned_clause = OwnedClause(c.copy());
-        _clauses_to_check.push_back(owned_clause);
+        _clauses_to_check.emplace_back(c.copy());
         _num_clauses_to_check++;
         c = reader.getNextIncomingClause();
     }

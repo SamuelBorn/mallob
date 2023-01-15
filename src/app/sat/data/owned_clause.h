@@ -9,7 +9,7 @@ struct OwnedClause {
 public:
     Clause stored_clause;
 
-    explicit OwnedClause(const Clause &clause) : stored_clause(clause) {}
+    explicit OwnedClause(const Clause clause) : stored_clause(clause) {}
 
     virtual ~OwnedClause() {
         free(stored_clause.begin);
