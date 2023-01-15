@@ -23,9 +23,8 @@
 #undef private
 
 Parameters params;
-std::list<OwnedClause> testClauses;
 
-void fillTestCdb(AdaptiveClauseDatabase::Setup &setup, AdaptiveClauseDatabase &cdb) {
+void fillTestCdb(AdaptiveClauseDatabase::Setup &setup, AdaptiveClauseDatabase &cdb, std::list<OwnedClause> &testClauses) {
     const int nbMaxClausesPerSlot = 10;
     int nbClausesThisSlot = 0;
     BufferIterator it(setup.maxClauseLength, setup.slotsForSumOfLengthAndLbd);
@@ -58,13 +57,13 @@ bool areClausesEqual(int *a, int a_len, int *b, int b_len) {
 void testClauseDestruction() {
     AdaptiveClauseDatabase::Setup setup;
     AdaptiveClauseDatabase cdb(setup);
-    fillTestCdb(setup, cdb);
+    std::list<OwnedClause> testClauses;
+    fillTestCdb(setup, cdb, testClauses);
+    int num_exported_clauses;
+    auto buf = cdb.exportBuffer(100000, num_exported_clauses);
 
     std::list<OwnedClause> clauses_to_check = {};
     std::atomic_int _num_clauses_to_check = 0;
-
-    int num_exported_clauses;
-    auto buf = cdb.exportBuffer(100000, num_exported_clauses);
 
     auto reader = BufferReader(buf.data(), buf.size(), setup.maxClauseLength, setup.slotsForSumOfLengthAndLbd, false);
     Clause c = reader.getNextIncomingClause();
@@ -86,8 +85,27 @@ void testClauseDestruction() {
     std::cout << "✔ Clause Destruction" << std::endl;
 }
 
+void testClauseCreation() {
+    AdaptiveClauseDatabase::Setup setup;
+    AdaptiveClauseDatabase cdb(setup);
+    std::list<OwnedClause> testClauses;
+    fillTestCdb(setup, cdb, testClauses);
+    int num_exported_clauses;
+    auto buf = cdb.exportBuffer(100000, num_exported_clauses);
+
+    std::vector<int> new_buffer;
+    auto builder = BufferBuilder(-1, params.strictClauseLengthLimit(), params.groupClausesByLengthLbdSum(), &new_buffer);
+    for (const auto &clause: testClauses) {
+        builder.append(clause.stored_clause);
+    }
+
+    assert(buf == new_buffer);
+    std::cout << "✔ Clause Creation" << std::endl;
+}
+
 int main(int argc, char *argv[]) {
     params.init(argc, argv);
 
     testClauseDestruction();
+    testClauseCreation();
 }
