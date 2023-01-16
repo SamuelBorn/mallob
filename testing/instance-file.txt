@@ -1,0 +1,2 @@
+testing/simple_dimacs1.cnf
+testing/simple_dimacs2.cnf
