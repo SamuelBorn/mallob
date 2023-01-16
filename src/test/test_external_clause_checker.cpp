@@ -103,9 +103,16 @@ void testClauseCreation() {
     std::cout << "✔ Clause Creation" << std::endl;
 }
 
+void testECCCreation() {
+    SatProcessConfig satProcessConfig;
+    SolverSetup solverSetup;
+    ExternalClauseChecker ecc(params, satProcessConfig, solverSetup, 0, nullptr, 0, nullptr, 0);
+}
+
 int main(int argc, char *argv[]) {
     params.init(argc, argv);
 
     testClauseDestruction();
     testClauseCreation();
+    testECCCreation();
 }

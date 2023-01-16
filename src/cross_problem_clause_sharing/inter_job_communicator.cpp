@@ -99,13 +99,15 @@ void InterJobCommunicator::forwardRingMessage(MessageHandle &h) {
     auto ring_message = Serializable::get<RingMessage>(h.getRecvData());
     // std::cout << _rank << " received. Forward? " << (ring_message.msg_start_rank == _next_ring_member_rank ? "no" : "yes") << std::endl;
     if (ring_message.group_id != _group_id) return;
-    if(_ring_action) _ring_action(ring_message);
+    if (_ring_action) _ring_action(ring_message);
     if (ring_message.msg_start_rank == _next_ring_member_rank) return;
     MyMpi::isend(_next_ring_member_rank, MSG_RING_MESSAGE, ring_message);
 }
 
-void InterJobCommunicator::setRingAction(std::function<void (RingMessage&)> callback) {
+void InterJobCommunicator::setRingAction(std::function<void(RingMessage &)> callback) {
     _ring_action = callback;
 }
 
-InterJobCommunicator::InterJobCommunicator() = default;
+InterJobCommunicator::InterJobCommunicator() {
+    std::cout << "MY RANK" << std::endl;
+};

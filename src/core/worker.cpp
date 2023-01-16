@@ -223,10 +223,11 @@ void Worker::allGatherGroupIds() {
     if (valid_job) {
         contribution.data[job.getDescription().getGroupId()] = {MyMpi::rank(_comm), job.getInterJobCommunicator().partOfRing()};
     }
+    LOG(V2_INFO, "Rank %i GroupIDGather. Valid job: %s.", MyMpi::rank(MPI_COMM_WORLD), valid_job ? "true" : "false" );
 
     _group_sharing_collective.allReduce(_reduction_call_counter++, contribution, [&](std::list<GroupSharingMap> &results) {
-        std::map<int, std::pair<int, bool>> ring_representatives = results.front().data;
         if (!valid_job) return;
+        std::map<int, std::pair<int, bool>> ring_representatives = results.front().data;
         job.getInterJobCommunicator().setGroupId(job.getDescription().getGroupId());
         job.getInterJobCommunicator().gatherIntoRing(ring_representatives, _reduction_call_counter);
         job.getInterJobCommunicator().handleOpenJoinRingRequests();
