@@ -35,6 +35,8 @@ private:
 
     IntVec _stored_clauses;
 
+    bool _crash_pending {false};
+
 public:
 
     ForkedSatJob(const Parameters& params, const JobSetup& setup);
@@ -78,6 +80,7 @@ public:
     void includeExternalProblemClauses(std::vector<int> &clauses);
 private:
     void doStartSolver();
+    void handleSolverCrash();
 
     bool checkClauseComm();
     void loadIncrements();
