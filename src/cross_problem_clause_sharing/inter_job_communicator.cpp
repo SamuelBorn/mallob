@@ -109,5 +109,5 @@ void InterJobCommunicator::setRingAction(std::function<void(RingMessage &)> call
 }
 
 InterJobCommunicator::InterJobCommunicator() {
-    std::cout << "MY RANK" << std::endl;
+    LOG(V2_INFO, "[CPCS] IJC created (%i)\n", MyMpi::rank(MPI_COMM_WORLD));
 };

@@ -63,6 +63,10 @@ private:
     AsyncCollective<GroupSharingMap> _group_sharing_collective;
     int _reduction_call_counter = 1;
 
+    MessageSubscription _join_ring_request_subscription = {MSG_JOIN_RING_REQUEST, [&](auto &h) { handleJoinRingRequest(h); }};
+    MessageSubscription _join_ring_request_accept_subscription = {MSG_JOIN_RING_REQUEST_ACCEPT, [&](auto &h) { handleJoinRingRequestAccept(h); }};
+    MessageSubscription _pass_ring_message_subscription = {MSG_RING_MESSAGE, [&](auto &h) { forwardRingMessage(h); }};
+
 public:
     Worker(MPI_Comm comm, Parameters& params);
     ~Worker();
@@ -76,6 +80,9 @@ private:
     void checkActiveJob();
     void publishAndResetSysState();
     void allGatherGroupIds();
+    void handleJoinRingRequest(MessageHandle &h);
+    void handleJoinRingRequestAccept(MessageHandle &h);
+    void forwardRingMessage(MessageHandle &h);
 };
 
 #endif

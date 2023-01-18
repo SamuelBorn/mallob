@@ -444,17 +444,6 @@ void* SatProcessAdapter::createSharedMemoryBlock(std::string shmemSubId, size_t 
     return shmem;
 }
 
-bool SatProcessAdapter::freeSharedMemoryBlock(const std::string& shmemSubId) {
-    for (auto& shmemObj : _shmem) {
-        std::string id = _shmem_id + "." + shmemSubId;
-        if(id == shmemObj.id){
-            SharedMemory::free(shmemObj.id, (char*)shmemObj.data, shmemObj.size);
-            return true;
-        }
-    }
-    return false;
-}
-
 void SatProcessAdapter::crash() {
     _hsm->doCrash = true;
 }

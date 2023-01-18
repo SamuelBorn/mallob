@@ -7,9 +7,9 @@
 class InterJobCommunicator {
 
 private:
-    MessageSubscription _join_ring_request_subscription = {MSG_JOIN_RING_REQUEST, [&](auto &h) { handleJoinRingRequest(h); }};
-    MessageSubscription _join_ring_request_accept_subscription = {MSG_JOIN_RING_REQUEST_ACCEPT, [&](auto &h) { handleJoinRingRequestAccept(h); }};
-    MessageSubscription _pass_ring_message_subscription = {MSG_RING_MESSAGE, [&](auto &h) { forwardRingMessage(h); }};
+//    MessageSubscription _join_ring_request_subscription = {MSG_JOIN_RING_REQUEST, [&](auto &h) { handleJoinRingRequest(h); }};
+//    MessageSubscription _join_ring_request_accept_subscription = {MSG_JOIN_RING_REQUEST_ACCEPT, [&](auto &h) { handleJoinRingRequestAccept(h); }};
+//    MessageSubscription _pass_ring_message_subscription = {MSG_RING_MESSAGE, [&](auto &h) { forwardRingMessage(h); }};
     std::function<void (RingMessage&)> _ring_action;
 
     int _next_ring_member_rank = -1;
@@ -39,17 +39,16 @@ public:
 
     void setRingAction(std::function<void(RingMessage &)> callback);
 
-private:
-    bool createNewRing(std::map<int, std::pair<int, bool>> &reps);
-
-    void acceptIntoRing(int rankToJoin);
-
     void handleJoinRingRequest(MessageHandle &h);
 
     void handleJoinRingRequestAccept(MessageHandle &h);
 
     void forwardRingMessage(MessageHandle &h);
 
+private:
+    bool createNewRing(std::map<int, std::pair<int, bool>> &reps);
+
+    void acceptIntoRing(int rankToJoin);
 };
 
 

@@ -88,7 +88,7 @@ void Worker::advance() {
 
     // All reduction of group ids
     if (_all_gather_group_ids.ready(time)) {
-        allGatherGroupIds();
+        //allGatherGroupIds();
     }
 
     _watchdog.setActivity(Watchdog::IDLE_OR_HANDLING_MSG);
@@ -223,7 +223,7 @@ void Worker::allGatherGroupIds() {
     if (valid_job) {
         contribution.data[job.getDescription().getGroupId()] = {MyMpi::rank(_comm), job.getInterJobCommunicator().partOfRing()};
     }
-    LOG(V2_INFO, "Rank %i GroupIDGather. Valid job: %s.", MyMpi::rank(MPI_COMM_WORLD), valid_job ? "true" : "false" );
+    LOG(V4_VVER, "[CPCS] GroupIDGather (%i). Valid: %s\n", MyMpi::rank(MPI_COMM_WORLD), valid_job ? "true" : "false" );
 
     _group_sharing_collective.allReduce(_reduction_call_counter++, contribution, [&](std::list<GroupSharingMap> &results) {
         if (!valid_job) return;
@@ -233,6 +233,25 @@ void Worker::allGatherGroupIds() {
         job.getInterJobCommunicator().handleOpenJoinRingRequests();
     });
 }
+
+void Worker::handleJoinRingRequest(MessageHandle &h) {
+    Job &job = _job_registry.getActive();
+    bool valid_job = _job_registry.hasActiveJob() && job.getJobTree().isRoot() && job.getDescription().getGroupId() != -1;
+    if (valid_job) job.getInterJobCommunicator().handleJoinRingRequest(h);
+}
+
+void Worker::handleJoinRingRequestAccept(MessageHandle &h) {
+    Job &job = _job_registry.getActive();
+    bool valid_job = _job_registry.hasActiveJob() && job.getJobTree().isRoot() && job.getDescription().getGroupId() != -1;
+    if (valid_job) job.getInterJobCommunicator().handleJoinRingRequestAccept(h);
+}
+
+void Worker::forwardRingMessage(MessageHandle &h) {
+    Job &job = _job_registry.getActive();
+    bool valid_job = _job_registry.hasActiveJob() && job.getJobTree().isRoot() && job.getDescription().getGroupId() != -1;
+    if (valid_job) job.getInterJobCommunicator().forwardRingMessage(h);
+}
+
 
 Worker::~Worker() {
 

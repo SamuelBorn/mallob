@@ -1,2 +1,3 @@
-testing/simple_dimacs1.cnf
-testing/simple_dimacs2.cnf
+instances/r3unsat_300.cnf
+instances/r3sat_300.cnf
+
