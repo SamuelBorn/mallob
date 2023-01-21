@@ -251,7 +251,7 @@ void ForkedSatJob::applyFilter(std::vector<int>& filter) {
     if (!_initialized) return;
     _solver->applyFilter(filter);
     applyFilterToLocalClauses(filter);
-    if (getInterJobCommunicator().partOfRing()) getInterJobCommunicator().emitMessageIntoRing(_stored_clauses);
+    //if (getInterJobCommunicator().partOfRing()) getInterJobCommunicator().emitMessageIntoRing(_stored_clauses);
 }
 
 void ForkedSatJob::applyFilterToLocalClauses(std::vector<int> &filter) {
@@ -300,9 +300,9 @@ void ForkedSatJob::startDestructThreadIfNecessary() {
 }
 
 void ForkedSatJob::includeExternalProblemClauses(std::vector<int> &clauses) {
-    assert(_initialized);
-    if (!_initialized) return;
-    _solver->includeExternalProblemClauses(clauses);
+//    assert(_initialized);
+//    if (!_initialized) return;
+//    _solver->includeExternalProblemClauses(clauses);
 }
 
 ForkedSatJob::~ForkedSatJob() {

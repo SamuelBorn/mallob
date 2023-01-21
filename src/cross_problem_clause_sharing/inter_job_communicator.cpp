@@ -13,6 +13,7 @@ void InterJobCommunicator::gatherIntoRing(std::map<int, std::pair<int, bool>> &r
     }
     _reduction_call_counter = reduction_call_counter;
 
+    LOG(V4_VVER, "[CPCS](%i) Sending join req to %i\n", MyMpi::rank(MPI_COMM_WORLD), reps[_group_id].first);
     MyMpi::isend(reps[_group_id].first, MSG_JOIN_RING_REQUEST, IntVec({_group_id, _rank, _reduction_call_counter}));
 }
 
@@ -20,6 +21,7 @@ void InterJobCommunicator::gatherIntoRing(std::map<int, std::pair<int, bool>> &r
 bool InterJobCommunicator::createNewRing(std::map<int, std::pair<int, bool>> &reps) {
     assert(reps.count(_group_id));
     if (reps[_group_id].first == _rank && !reps[_group_id].second) {
+        LOG(V4_VVER, "[CPCS](%i) Create new ring by myself\n", MyMpi::rank(MPI_COMM_WORLD));
         _next_ring_member_rank = _rank;
         return true;
     }
@@ -28,6 +30,7 @@ bool InterJobCommunicator::createNewRing(std::map<int, std::pair<int, bool>> &re
 
 void InterJobCommunicator::handleOpenJoinRingRequests() {
     for (const auto &rankToJoin: _open_join_request_ranks) {
+        LOG(V5_DEBG, "[CPCS](%i) handleOpenJoinRingRequests\n", MyMpi::rank(MPI_COMM_WORLD));
         acceptIntoRing(rankToJoin);
     }
     _open_join_request_ranks.clear();
@@ -109,5 +112,5 @@ void InterJobCommunicator::setRingAction(std::function<void(RingMessage &)> call
 }
 
 InterJobCommunicator::InterJobCommunicator() {
-    LOG(V2_INFO, "[CPCS] IJC created (%i)\n", MyMpi::rank(MPI_COMM_WORLD));
+    LOG(V5_DEBG, "[CPCS] IJC created (%i)\n", MyMpi::rank(MPI_COMM_WORLD));
 };

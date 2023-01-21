@@ -183,10 +183,10 @@ private:
     mutable int _age_of_const_cooldown = -1;
     mutable int _last_demand = 0;
 
-    InterJobCommunicator _inter_job_communicator;
-
     std::optional<JobRequest> _request_to_multiply_left;
     std::optional<JobRequest> _request_to_multiply_right;
+
+    InterJobCommunicator _inter_job_communicator;
 
 // Public methods.
 public:
@@ -236,6 +236,7 @@ public:
 
     // Getter methods and simple queries
 
+    InterJobCommunicator &getInterJobCommunicator() { return _inter_job_communicator; }
     JobState getState() const {return _state;};
     void assertState(JobState state) const {assert(_state == state || LOG_RETURN_FALSE("State of %s : %s\n", toStr(), jobStateToStr()));};
     int getVolume() const {return _volume;}
@@ -358,8 +359,6 @@ public:
     static std::string toStr(int jobId, int jobIndex) {
         return "#" + std::to_string(jobId) + ":" + std::to_string(jobIndex);
     }
-
-    InterJobCommunicator &getInterJobCommunicator();
 };
 
 #endif

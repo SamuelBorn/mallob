@@ -216,7 +216,3 @@ void Job::communicate(int source, int mpiTag, JobMessage& msg) {
         appl_communicate(source, mpiTag, msg);
     }
 }
-
-InterJobCommunicator &Job::getInterJobCommunicator() {
-    return _inter_job_communicator;
-}
