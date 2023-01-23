@@ -176,4 +176,5 @@ const int MSG_JOIN_RING_REQUEST = 500;
 const int MSG_JOIN_RING_REQUEST_ACCEPT = 501;
 const int MSG_RING_MESSAGE = 502;
 
+
 #endif

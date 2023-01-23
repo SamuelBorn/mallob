@@ -14,7 +14,6 @@
 #include "data/checksum.hpp"
 #include "data/job_result.hpp"
 #include "../job/sat_process_config.hpp"
-#include "app/sat/solvers/cadical.hpp"
 #include "cross_problem_clause_sharing/external_clause_checker.hpp"
 
 class SatEngine {
@@ -24,6 +23,7 @@ private:
 	Parameters _params;
 	SatProcessConfig _config;
 	Logger& _logger;
+    SolverSetup _solver_setup;
 	int _job_id;
 	
 	size_t _num_solvers;
@@ -34,8 +34,6 @@ private:
 	std::vector<std::shared_ptr<SolverThread>> _obsolete_solver_threads;
 
     std::shared_ptr<ExternalClauseChecker> _external_clause_checker;
-
-    SolverSetup _solver_setup;
 
 	struct RevisionData {
 		size_t fSize;

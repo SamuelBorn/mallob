@@ -52,9 +52,9 @@ struct SatSharedMemory {
     int importBufferSize;
     int importBufferRevision;
     int returnedBufferSize;
-    Checksum importChecksum;
     int externalClausesBufferSize;
     int externalClausesBufferMaxSize;
+    Checksum importChecksum;
     
     // Clause buffers: child->parent
     int exportBufferTrueSize;
@@ -62,6 +62,4 @@ struct SatSharedMemory {
     int filterSize;
     int lastNumClausesToImport;
     int lastNumAdmittedClausesToImport;
-
-    bool sameProblemJustDifferentAssumptions;
 };

@@ -19,7 +19,6 @@
 #include "comm/job_comm.hpp"
 #include "scheduling/local_scheduler.hpp"
 #include "cross_problem_clause_sharing/inter_job_communicator.hpp"
-#include "cross_problem_clause_sharing/ring_message.hpp"
 
 typedef std::function<void(JobRequest& req, int tag, bool left, int dest)> EmitDirectedJobRequestCallback;
 
@@ -236,6 +235,7 @@ public:
 
     // Getter methods and simple queries
 
+    bool isRingMember() { return _inter_job_communicator.isRingMember(); }
     InterJobCommunicator &getInterJobCommunicator() { return _inter_job_communicator; }
     JobState getState() const {return _state;};
     void assertState(JobState state) const {assert(_state == state || LOG_RETURN_FALSE("State of %s : %s\n", toStr(), jobStateToStr()));};

@@ -14,7 +14,7 @@ using namespace SolvingStates;
 
 ExternalClauseChecker::ExternalClauseChecker(const Parameters &params, const SatProcessConfig &config, const SolverSetup &solverSetup,
                                              size_t fSize, const int *fLits, size_t aSize, const int *aLits, int localId) :
-        _params(params), _solver_ptr(createLocalSolverInterface(params, config, solverSetup)), _solver(*_solver_ptr),
+        _params(params), _solver_ptr(createLocalSolverInterface(solverSetup)), _solver(*_solver_ptr),
         _logger(_solver.getLogger()), _local_id(localId),
         _has_pseudoincremental_solvers(_solver.getSolverSetup().hasPseudoincrementalSolvers) {
 
@@ -239,9 +239,10 @@ void ExternalClauseChecker::diversifyAfterReading() {
 }
 
 void ExternalClauseChecker::runOnce() {
-
     std::list<OwnedClause>::iterator clause;
+
     while (_num_clauses_to_check > 0) {
+
         {
             auto lock = _clauses_to_check_mutex.getLock();
             clause = _clauses_to_check.begin();
@@ -271,7 +272,9 @@ void ExternalClauseChecker::runOnce() {
             aLits = tldAssumptions.data();
         }
 
+        LOG(V5_DEBG, "[CPCS] ECC: Checking Clause\n");
         SatResult res = _solver.solve(aSize, aLits);
+        LOG(V5_DEBG, "[CPCS] ECC: Clause valid: %i\n", res == UNSAT);
 
         // Un interrupt solver (if it was interrupted)
         {
@@ -353,7 +356,7 @@ void ExternalClauseChecker::reportResult(int res, int revision) {
     _found_result = true;
 }
 
-Cadical *ExternalClauseChecker::createLocalSolverInterface(const Parameters &params, const SatProcessConfig &config, const SolverSetup solverSetup) {
+Cadical *ExternalClauseChecker::createLocalSolverInterface(const SolverSetup &solverSetup) {
     auto cadical = new Cadical(solverSetup);
     cadical->setAllowedConflicts(0);
     return cadical;
@@ -371,18 +374,19 @@ const char *ExternalClauseChecker::toStr() {
 void ExternalClauseChecker::submitClausesForTesting(int *externalClausesBuffer, int externalClausesBufferSize) {
     auto lock = _clauses_to_check_mutex.getLock();
 
-    auto useChecksums = true;
-    auto reader = BufferReader(externalClausesBuffer, externalClausesBufferSize, _params.strictClauseLengthLimit(), _params.groupClausesByLengthLbdSum(), useChecksums);
+    auto reader = BufferReader(externalClausesBuffer, externalClausesBufferSize, _params.strictClauseLengthLimit(), _params.groupClausesByLengthLbdSum(), false);
     Clause c = reader.getNextIncomingClause();
     while (c.begin != nullptr) {
         _clauses_to_check.emplace_back(c.copy());
         _num_clauses_to_check++;
         c = reader.getNextIncomingClause();
     }
+    LOG(V4_VVER, "[CPCS] ECC received clauses. There are now %i to check. Admitted queue: %i\n", (int) _num_clauses_to_check, _admitted_clauses.size());
 }
 
 std::vector<int> ExternalClauseChecker::fetchAdmittedClauses() {
     auto lock = _admitted_clauses_mutex.getLock();
+    LOG(V4_VVER, "[CPCS] Fetching %i admitted clauses\n", _admitted_clauses.size());
 
     std::vector<int> buffer;
     auto builder = BufferBuilder(-1, _params.strictClauseLengthLimit(), _params.groupClausesByLengthLbdSum(), &buffer);
@@ -391,4 +395,9 @@ std::vector<int> ExternalClauseChecker::fetchAdmittedClauses() {
     }
     _admitted_clauses.clear();
     return buffer;
+}
+
+bool ExternalClauseChecker::hasAdmittedClauses() {
+    return false;
+    !_admitted_clauses.empty();
 }

@@ -1,3 +1,2 @@
-instances/r3unsat_300.cnf
-instances/r3sat_300.cnf
-
+/home/sam/Repos/mallob/testing/similar1_r3sat_300.cnf
+/home/sam/Repos/mallob/testing/similar2_r3sat_300.cnf

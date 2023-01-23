@@ -9,7 +9,7 @@
 
 #include "app/sat/solvers/cadical.hpp"
 #include "app/sat/execution/solver_thread.hpp"
-#include "app/sat/data/owned_clause.h"
+#include "app/sat/data/owned_clause.hpp"
 
 class SatEngine;
 
@@ -22,7 +22,7 @@ private:
     Mutex _clauses_to_check_mutex;
     Mutex _admitted_clauses_mutex;
 
-    std::atomic_int _num_clauses_to_check;
+    std::atomic_int _num_clauses_to_check = 0;
 
     const Parameters& _params;
     std::unique_ptr<Cadical> _solver_ptr;
@@ -99,6 +99,7 @@ public:
 
     void submitClausesForTesting(int *externalClausesBuffer, int externalClausesBufferSize);
     std::vector<int> fetchAdmittedClauses();
+    bool hasAdmittedClauses();
 
 private:
     void init();
@@ -118,8 +119,7 @@ private:
 
     void reportResult(int res, int revision);
 
-    Cadical* createLocalSolverInterface(const Parameters& params, const SatProcessConfig& config, const SolverSetup solverSetup);
+    Cadical* createLocalSolverInterface(const SolverSetup &solverSetup);
 
     const char* toStr();
-
 };

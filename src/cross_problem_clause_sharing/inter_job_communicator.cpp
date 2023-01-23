@@ -7,13 +7,13 @@
 
 void InterJobCommunicator::gatherIntoRing(std::map<int, std::pair<int, bool>> &reps, int reduction_call_counter) {
     assert(_group_id != -2);
-    if (partOfRing() || createNewRing(reps)) {
+    if (isRingMember() || createNewRing(reps)) {
         _reduction_call_counter = reduction_call_counter;
         return;
     }
     _reduction_call_counter = reduction_call_counter;
 
-    LOG(V4_VVER, "[CPCS](%i) Sending join req to %i\n", MyMpi::rank(MPI_COMM_WORLD), reps[_group_id].first);
+    LOG(V4_VVER, "[CPCS] Sending join req to %i\n", reps[_group_id].first);
     MyMpi::isend(reps[_group_id].first, MSG_JOIN_RING_REQUEST, IntVec({_group_id, _rank, _reduction_call_counter}));
 }
 
@@ -21,7 +21,7 @@ void InterJobCommunicator::gatherIntoRing(std::map<int, std::pair<int, bool>> &r
 bool InterJobCommunicator::createNewRing(std::map<int, std::pair<int, bool>> &reps) {
     assert(reps.count(_group_id));
     if (reps[_group_id].first == _rank && !reps[_group_id].second) {
-        LOG(V4_VVER, "[CPCS](%i) Create new ring by myself\n", MyMpi::rank(MPI_COMM_WORLD));
+        LOG(V4_VVER, "[CPCS] Create new ring by myself\n");
         _next_ring_member_rank = _rank;
         return true;
     }
@@ -30,7 +30,7 @@ bool InterJobCommunicator::createNewRing(std::map<int, std::pair<int, bool>> &re
 
 void InterJobCommunicator::handleOpenJoinRingRequests() {
     for (const auto &rankToJoin: _open_join_request_ranks) {
-        LOG(V5_DEBG, "[CPCS](%i) handleOpenJoinRingRequests\n", MyMpi::rank(MPI_COMM_WORLD));
+        LOG(V5_DEBG, "[CPCS] handleOpenJoinRingRequests\n");
         acceptIntoRing(rankToJoin);
     }
     _open_join_request_ranks.clear();
@@ -73,7 +73,7 @@ void InterJobCommunicator::setGroupId(int group_id) {
     _group_id = group_id;
 }
 
-bool InterJobCommunicator::partOfRing() {
+bool InterJobCommunicator::isRingMember() {
     return _next_ring_member_rank != -1;
 }
 
@@ -82,8 +82,8 @@ int InterJobCommunicator::getNextRingMemberRank() {
 }
 
 void InterJobCommunicator::emitMessageIntoRing(std::vector<uint8_t> &payload) {
-    assert(partOfRing());
-    std::cout << _rank << " is emitting to " << _next_ring_member_rank << std::endl;
+    assert(isRingMember());
+    if (_next_ring_member_rank == _rank) return;
     auto r = RingMessage(_group_id, _rank, payload);
     MyMpi::isend(_next_ring_member_rank, MSG_RING_MESSAGE, r);
 }
@@ -98,9 +98,9 @@ void InterJobCommunicator::setNextRingMemberRank(int nextRingMemberRank) {
 }
 
 void InterJobCommunicator::forwardRingMessage(MessageHandle &h) {
-    assert(partOfRing());
+    if (not isRingMember()) return;
+    if (_next_ring_member_rank == _rank) return;
     auto ring_message = Serializable::get<RingMessage>(h.getRecvData());
-    // std::cout << _rank << " received. Forward? " << (ring_message.msg_start_rank == _next_ring_member_rank ? "no" : "yes") << std::endl;
     if (ring_message.group_id != _group_id) return;
     if (_ring_action) _ring_action(ring_message);
     if (ring_message.msg_start_rank == _next_ring_member_rank) return;
@@ -112,5 +112,5 @@ void InterJobCommunicator::setRingAction(std::function<void(RingMessage &)> call
 }
 
 InterJobCommunicator::InterJobCommunicator() {
-    LOG(V5_DEBG, "[CPCS] IJC created (%i)\n", MyMpi::rank(MPI_COMM_WORLD));
+    LOG(V5_DEBG, "[CPCS] IJC created\n");
 };

@@ -25,7 +25,7 @@
 
 using namespace SolvingStates;
 
-SatEngine::SatEngine(const Parameters& params, const SatProcessConfig& config, Logger& loggingInterface) :
+SatEngine::SatEngine(const Parameters& params, const SatProcessConfig& config, Logger& loggingInterface) : 
 			_params(params), _config(config), _logger(loggingInterface), _state(INITIALIZING) {
 	
     int appRank = config.apprank;
@@ -88,8 +88,6 @@ SatEngine::SatEngine(const Parameters& params, const SatProcessConfig& config, L
 	setup.numBufferedClsGenerations = params.bufferedImportedClsGenerations();
 	setup.skipClauseSharingDiagonally = true;
 
-    _solver_setup = setup;
-
 	// Instantiate solvers according to the global solver IDs and diversification indices
 	int cyclePos = begunCyclePos;
 	for (setup.localId = 0; setup.localId < _num_solvers; setup.localId++) {
@@ -108,6 +106,7 @@ SatEngine::SatEngine(const Parameters& params, const SatProcessConfig& config, L
 		_solver_interfaces.emplace_back(createSolver(setup));
 		cyclePos = (cyclePos+1) % solverChoices.size();
 	}
+    _solver_setup = setup;
 
 	_sharing_manager.reset(new SharingManager(_solver_interfaces, _params, _logger, 
 		/*max. deferred literals per solver=*/5*config.maxBroadcastedLitsPerCycle, config.apprank));
@@ -167,9 +166,9 @@ void SatEngine::appendRevision(int revision, size_t fSize, const int* fLits, siz
 	assert(_revision+1 == revision);
 	_revision_data.push_back(RevisionData{fSize, fLits, aSize, aLits});
 	_sharing_manager->setRevision(revision);
-	
+
     if (revision == 0) {
-        _external_clause_checker.reset(new ExternalClauseChecker(_params, _config, _solver_setup, fSize, fLits, aSize, aLits, _num_solvers));
+        _external_clause_checker = std::make_unique<ExternalClauseChecker>(_params, _config, _solver_setup, fSize, fLits, aSize, aLits, 0);
         _external_clause_checker->start();
     }
 	for (size_t i = 0; i < _num_solvers; i++) {
@@ -394,10 +393,19 @@ SatEngine::~SatEngine() {
 }
 
 void SatEngine::checkExternalClausesForImport(int *externalClausesBuffer, int externalClausesBufferSize) {
+    if (!_external_clause_checker) {
+        LOG(V4_VVER, "[CPCS] Engine: Submit failed, ECC not init\n");
+        return;
+    }
     _external_clause_checker->submitClausesForTesting(externalClausesBuffer, externalClausesBufferSize);
 }
 
 void SatEngine::incorporateAdmittedExternalClauses() {
+    if (!_external_clause_checker) {
+        LOG(V4_VVER, "[CPCS] Engine: Incorporate failed, ECC not init\n");
+        return;
+    }
+    if (!_external_clause_checker->hasAdmittedClauses()) return;
     auto clauses = _external_clause_checker->fetchAdmittedClauses();
     if (clauses.empty()) return;
     digestSharingWithoutFilter(clauses.data(), clauses.size());

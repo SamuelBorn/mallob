@@ -12,6 +12,7 @@
 #include "sat_process_adapter.hpp"
 #include "sat_constants.h"
 #include "base_sat_job.hpp"
+#include "app/sat/sharing/buffer/buffer_reducer.hpp"
 
 class ForkedSatJob : public BaseSatJob {
 
@@ -33,9 +34,9 @@ private:
     std::atomic_bool _done_locally = false;
     JobResult _internal_result;
 
-    IntVec _stored_clauses;
-
     bool _crash_pending {false};
+
+    IntVec _stored_clauses;
 
 public:
 
@@ -78,6 +79,7 @@ public:
     void returnClauses(std::vector<int>& clauses) override;
 
     void includeExternalProblemClauses(std::vector<int> &clauses);
+
 private:
     void doStartSolver();
     void handleSolverCrash();

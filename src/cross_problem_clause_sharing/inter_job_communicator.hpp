@@ -25,7 +25,7 @@ public:
 
     void handleOpenJoinRingRequests();
 
-    bool partOfRing();
+    bool isRingMember();
 
     void setGroupId(int group_id);
 

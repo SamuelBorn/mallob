@@ -148,4 +148,5 @@ private:
     void doReturnClauses(const std::vector<int>& clauses);
     void initSharedMemory(SatProcessConfig&& config);
     void* createSharedMemoryBlock(std::string shmemSubId, size_t size, void* data);
+
 };

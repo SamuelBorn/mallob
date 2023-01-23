@@ -221,22 +221,19 @@ void Worker::allGatherGroupIds() {
 
     GroupSharingMap contribution;
     if (valid_job) {
-        contribution.data[job.getDescription().getGroupId()] = {MyMpi::rank(_comm), job.getInterJobCommunicator().partOfRing()};
-        auto x = job.getInterJobCommunicator().partOfRing() ? "true" : "false";
-        LOG(V4_VVER, "[CPCS](%i) GroupIDGather - GID: %i - Ring: %s\n", MyMpi::rank(MPI_COMM_WORLD), job.getDescription().getGroupId(), x);
+        contribution.data[job.getDescription().getGroupId()] = {MyMpi::rank(_comm), job.isRingMember()};
+        LOG(V5_DEBG, "[CPCS] GroupIDGather - GID: %i - Ring: %i\n", job.getDescription().getGroupId(), job.isRingMember());
     }else{
-        LOG(V4_VVER, "[CPCS](%i) GroupIDGather - unvalid\n", MyMpi::rank(MPI_COMM_WORLD));
+        LOG(V5_DEBG, "[CPCS] GroupIDGather - unvalid\n");
     }
 
     _group_sharing_collective.allReduce(_reduction_call_counter++, contribution, [&](std::list<GroupSharingMap> &results) {
-        // ! YOU HAVE TO REEVALUATE THE JOB AND VALID JOB / &context did not work
+        // ! you have to reevaluate the job and valid job -- &context did not work
         Job &job = _job_registry.getActive();
         bool valid_job = _job_registry.hasActiveJob() && job.getJobTree().isRoot() && job.getDescription().getGroupId() != -1;
         if (!valid_job) return;
 
         std::map<int, std::pair<int, bool>> ring_representatives = results.front().data;
-        auto x = job.getInterJobCommunicator().partOfRing() ? "true" : "false";
-        //LOG(V4_VVER, "[CPCS](%i) AllReduction - RepsSize=%i - Rep[0]=%i - Ring=%s\n", MyMpi::rank(MPI_COMM_WORLD), ring_representatives.size(), ring_representatives.at(0).first, x);
         job.getInterJobCommunicator().setGroupId(job.getDescription().getGroupId());
         job.getInterJobCommunicator().gatherIntoRing(ring_representatives, _reduction_call_counter);
         job.getInterJobCommunicator().handleOpenJoinRingRequests();

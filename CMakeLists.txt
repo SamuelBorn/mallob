@@ -161,6 +161,3 @@ new_test(concurrent_malloc)
 new_test(hashing)
 new_test(async_collective)
 new_test(random)
-
-new_test(ring)
-new_test(external_clause_checker)

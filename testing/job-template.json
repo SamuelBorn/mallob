@@ -8,5 +8,6 @@
     "wallclock-limit": "0", 
     "cpu-limit": "0", 
     "max-demand": 0, 
-    "configuration": {} 
+    "configuration": {},
+    "group_id": "hallo"
 }

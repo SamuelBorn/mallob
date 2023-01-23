@@ -11,13 +11,13 @@
 #include "util/sys/process.hpp"
 #include "sat_process_config.hpp"
 #include "util/sys/thread_pool.hpp"
-#include "app/sat/sharing/buffer/buffer_reducer.hpp"
 
 std::atomic_int ForkedSatJob::_static_subprocess_index = 1;
 
 ForkedSatJob::ForkedSatJob(const Parameters& params, const JobSetup& setup) : 
         BaseSatJob(params, setup) {
     getInterJobCommunicator().setRingAction([&](RingMessage &msg) {
+        LOG(V5_DEBG, "[CPCS] ForkedSatJob sending clauses\n");
         std::vector<int> clauses(msg.payload.size() / sizeof(int));
         memcpy(clauses.data(), msg.payload.data(), msg.payload.size());
         includeExternalProblemClauses(clauses);
@@ -236,8 +236,10 @@ std::pair<int, int> ForkedSatJob::getLastAdmittedClauseShare() {
 
 void ForkedSatJob::filterSharing(std::vector<int>& clauses) {
     if (!_initialized) return;
+
+    if (isRingMember()) _stored_clauses = IntVec(clauses);
+
     _solver->filterClauses(clauses);
-    _stored_clauses = clauses;
 }
 bool ForkedSatJob::hasFilteredSharing() {
     if (!_initialized) return false;
@@ -249,9 +251,13 @@ std::vector<int> ForkedSatJob::getLocalFilter() {
 }
 void ForkedSatJob::applyFilter(std::vector<int>& filter) {
     if (!_initialized) return;
+
+    if (isRingMember()) {
+        applyFilterToLocalClauses(filter);
+        getInterJobCommunicator().emitMessageIntoRing(_stored_clauses);
+    }
+
     _solver->applyFilter(filter);
-    applyFilterToLocalClauses(filter);
-    //if (getInterJobCommunicator().partOfRing()) getInterJobCommunicator().emitMessageIntoRing(_stored_clauses);
 }
 
 void ForkedSatJob::applyFilterToLocalClauses(std::vector<int> &filter) {
@@ -300,9 +306,9 @@ void ForkedSatJob::startDestructThreadIfNecessary() {
 }
 
 void ForkedSatJob::includeExternalProblemClauses(std::vector<int> &clauses) {
-//    assert(_initialized);
-//    if (!_initialized) return;
-//    _solver->includeExternalProblemClauses(clauses);
+    assert(_initialized);
+    if (!_initialized) return;
+    _solver->includeExternalProblemClauses(clauses);
 }
 
 ForkedSatJob::~ForkedSatJob() {

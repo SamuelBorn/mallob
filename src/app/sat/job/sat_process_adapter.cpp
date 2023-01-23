@@ -96,6 +96,8 @@ void SatProcessAdapter::doInitialize() {
     _hsm->doImportExternalClauses = false;
     _hsm->exportBufferMaxSize = 0;
     _hsm->importBufferSize = 0;
+    _hsm->externalClausesBufferMaxSize = 0;
+    _hsm->externalClausesBufferSize = 0;
     _hsm->didExport = false;
     _hsm->didFilterImport = false;
     _hsm->didDigestImport = false;
@@ -121,6 +123,7 @@ void SatProcessAdapter::doInitialize() {
         MyMpi::ALL
     ) + 1024;
     _hsm->externalClausesBufferMaxSize = _hsm->importBufferMaxSize;
+
     _export_buffer = (int*) createSharedMemoryBlock("clauseexport", 
             sizeof(int)*_hsm->exportBufferAllocatedSize, nullptr);
     _import_buffer = (int*) createSharedMemoryBlock("clauseimport", 
@@ -130,7 +133,7 @@ void SatProcessAdapter::doInitialize() {
     _returned_buffer = (int*) createSharedMemoryBlock("returnedclauses",
             sizeof(int)*_hsm->importBufferMaxSize, nullptr);
     _external_clauses_buffer = (int*) createSharedMemoryBlock("externalclauses",
-            sizeof(int)*_hsm->importBufferMaxSize, nullptr);
+            sizeof(int)*_hsm->externalClausesBufferMaxSize, nullptr);
 
     // Allocate shared memory for formula, assumptions of initial revision
     createSharedMemoryBlock("formulae.0", sizeof(int) * _f_size, (void*)_f_lits);
@@ -265,7 +268,7 @@ bool SatProcessAdapter::process(const std::vector<int>& buffer, BufferTask task)
     } else if (task == IMPORT_EXTERNAL_CLAUSES) {
         _hsm->externalClausesBufferSize = buffer.size();
         assert(_hsm->externalClausesBufferSize <= _hsm->externalClausesBufferMaxSize);
-        memcpy(_external_clauses_buffer, buffer.data(), buffer.size()*sizeof(int));
+        memcpy(_external_clauses_buffer, buffer.data(), buffer.size() * sizeof(int));
         _hsm->doImportExternalClauses = true;
     }
 
@@ -274,7 +277,6 @@ bool SatProcessAdapter::process(const std::vector<int>& buffer, BufferTask task)
 }
 
 void SatProcessAdapter::includeExternalProblemClauses(const std::vector<int> &clauses) {
-    _hsm->sameProblemJustDifferentAssumptions = false;
     if (!process(clauses, IMPORT_EXTERNAL_CLAUSES)) _pending_tasks.emplace_back(clauses, IMPORT_EXTERNAL_CLAUSES);
 }
 

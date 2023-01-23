@@ -70,7 +70,9 @@ public:
             int maxFilterSize = _hsm->importBufferMaxSize/8 + 1;
             _filter_buffer = (int*) accessMemory(_shmem_id + ".clausefilter", maxFilterSize);
             _returned_buffer = (int*) accessMemory(_shmem_id + ".returnedclauses", maxImportBufferSize);
-            _external_clauses_buffer = (int*) accessMemory(_shmem_id + ".externalclauses", maxExportBufferSize);
+
+            int maxExternalClausesBufferSize = _hsm->externalClausesBufferMaxSize * sizeof(int);
+            _external_clauses_buffer = (int*) accessMemory(_shmem_id + ".externalclauses", maxExternalClausesBufferSize);
         }
 
         // Import first revision
@@ -111,13 +113,6 @@ public:
             // Read new revisions as necessary
             importRevisions();
 
-            // Import external problem clauses
-            if (_hsm->doImportExternalClauses && !_hsm->didImportExternalClauses) {
-                _engine.checkExternalClausesForImport(_external_clauses_buffer, _hsm->externalClausesBufferSize);
-                _hsm->didImportExternalClauses = true;
-            }
-            if (!_hsm->doImportExternalClauses) _hsm->didImportExternalClauses = false;
-
             // Dump stats
             if (_hsm->doDumpStats && !_hsm->didDumpStats) {
                 LOGGER(_log, V5_DEBG, "DO dump stats\n");
@@ -151,11 +146,12 @@ public:
 
             // Check if clauses should be exported
             if (_hsm->doExport && !_hsm->didExport) {
+                _engine.incorporateAdmittedExternalClauses();
+
                 LOGGER(_log, V5_DEBG, "DO export clauses\n");
                 // Collect local clauses, put into shared memory
                 _hsm->exportChecksum = Checksum();
                 _hsm->exportBufferTrueSize = _engine.prepareSharing(_export_buffer, _hsm->exportBufferMaxSize);
-                _engine.incorporateAdmittedExternalClauses();
                 auto [admitted, total] = _engine.getLastAdmittedClauseShare();
                 _hsm->lastNumAdmittedClausesToImport = admitted;
                 _hsm->lastNumClausesToImport = total;
@@ -195,6 +191,14 @@ public:
                 _hsm->didReturnClauses = true;
             }
             if (!_hsm->doReturnClauses) _hsm->didReturnClauses = false;
+
+            // Import external problem clauses
+            if (_hsm->doImportExternalClauses && !_hsm->didImportExternalClauses) {
+                LOG(V5_DEBG, "[CPCS] SAT PROCESS SOLVING\n");
+                _engine.checkExternalClausesForImport(_external_clauses_buffer, _hsm->externalClausesBufferSize);
+                _hsm->didImportExternalClauses = true;
+            }
+            if (!_hsm->doImportExternalClauses) _hsm->didImportExternalClauses = false;
 
             // Check initialization state
             if (!_hsm->isInitialized && _engine.isFullyInitialized()) {
