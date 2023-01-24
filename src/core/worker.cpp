@@ -222,9 +222,9 @@ void Worker::allGatherGroupIds() {
     GroupSharingMap contribution;
     if (valid_job) {
         contribution.data[job.getDescription().getGroupId()] = {MyMpi::rank(_comm), job.isRingMember()};
-        LOG(V4_VVER, "[CPCS] GroupIDGather - GID: %i - Ring: %i\n", job.getDescription().getGroupId(), job.isRingMember());
+        //LOG(V4_VVER, "[CPCS] GroupIDGather - GID: %i - Ring: %i\n", job.getDescription().getGroupId(), job.isRingMember());
     }else{
-        LOG(V4_VVER, "[CPCS] GroupIDGather - unvalid\n");
+        //LOG(V4_VVER, "[CPCS] GroupIDGather - unvalid\n");
     }
 
     _group_sharing_collective.allReduce(_reduction_call_counter++, contribution, [&](std::list<GroupSharingMap> &results) {
