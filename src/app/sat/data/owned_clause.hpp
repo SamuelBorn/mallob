@@ -14,4 +14,8 @@ public:
     virtual ~OwnedClause() {
         free(stored_clause.begin);
     }
+
+    bool operator<(const OwnedClause& other) const {
+        return this->stored_clause < other.stored_clause;
+    }
 };

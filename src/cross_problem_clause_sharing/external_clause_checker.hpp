@@ -17,7 +17,7 @@ class ExternalClauseChecker {
 
 private:
     std::list<OwnedClause> _clauses_to_check;
-    std::list<OwnedClause> _admitted_clauses;
+    std::set<OwnedClause> _admitted_clauses;
 
     Mutex _clauses_to_check_mutex;
     Mutex _admitted_clauses_mutex;
