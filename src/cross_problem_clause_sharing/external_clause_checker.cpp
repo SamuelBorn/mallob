@@ -17,7 +17,7 @@ using namespace SolvingStates;
 ExternalClauseChecker::ExternalClauseChecker(const Parameters &params, const SatProcessConfig &config, const SolverSetup &solverSetup,
                                              size_t fSize, const int *fLits, size_t aSize, const int *aLits, int localId) :
         _params(params), _solver_ptr(createLocalSolverInterface(solverSetup)), _solver(*_solver_ptr),
-        _logger(_solver.getLogger()), _local_id(localId),
+        _logger(_solver.getLogger()), _local_id(localId), _clause_bloom_filter(params.strictClauseLengthLimit()),
         _has_pseudoincremental_solvers(_solver.getSolverSetup().hasPseudoincrementalSolvers) {
 
     _portfolio_rank = config.apprank;
@@ -380,8 +380,14 @@ void ExternalClauseChecker::submitClausesForTesting(int *externalClausesBuffer, 
     auto reader = BufferReader(externalClausesBuffer, externalClausesBufferSize, _params.strictClauseLengthLimit(), _params.groupClausesByLengthLbdSum(), false);
     Clause c = reader.getNextIncomingClause();
     while (c.begin != nullptr) {
-        _clauses_to_check.emplace_back(c.copy());
-        _num_clauses_to_check++;
+
+        if (_clause_bloom_filter.registerClause(c.begin, c.size)) {
+            _clauses_to_check.emplace_back(c.copy());
+            _num_clauses_to_check++;
+        } else {
+            LOG(V4_VVER, "[CPCS] Clause discarded -> already existed in bloom filter\n");
+        }
+
         c = reader.getNextIncomingClause();
     }
     LOG(V4_VVER, "[CPCS] RECV clauses. To check: %i\n", (int) _num_clauses_to_check);

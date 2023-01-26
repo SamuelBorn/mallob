@@ -10,6 +10,7 @@
 #include "app/sat/solvers/cadical.hpp"
 #include "app/sat/execution/solver_thread.hpp"
 #include "app/sat/data/owned_clause.hpp"
+#include "app/sat/sharing/filter/clause_filter.hpp"
 
 class SatEngine;
 
@@ -23,6 +24,8 @@ private:
     Mutex _admitted_clauses_mutex;
 
     std::atomic_int _num_clauses_to_check = 0;
+
+    ClauseFilter _clause_bloom_filter;
 
     const Parameters& _params;
     std::unique_ptr<Cadical> _solver_ptr;

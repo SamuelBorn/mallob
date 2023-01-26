@@ -30,7 +30,7 @@ public:
         if (!_timeout_enabled) return false;
         if (!_solver_started) return false;
         float elapsedTimeSinceSolverStarted = Timer::elapsedSeconds() - _last_start_seconds;
-        if (elapsedTimeSinceSolverStarted > _timeout_seconds) LOG(V4_VVER, "[CPCS] Cadical Timeout after %.2f\n", elapsedTimeSinceSolverStarted);
+        if (elapsedTimeSinceSolverStarted > _timeout_seconds) LOG(V5_DEBG, "[CPCS] Cadical Timeout after %.2f\n", elapsedTimeSinceSolverStarted);
         return elapsedTimeSinceSolverStarted > _timeout_seconds;
     }
 
