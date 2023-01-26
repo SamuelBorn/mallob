@@ -7,6 +7,8 @@
 #include "util/sys/proc.hpp"
 #include "util/hashing.hpp"
 #include "external_clause_checker.hpp"
+#include "clause_check_order_strategies/clause_checking_order_buffer.hpp"
+#include "app/sat/solvers/cadical_timeout_terminator.hpp"
 
 using namespace SolvingStates;
 
@@ -359,6 +361,7 @@ void ExternalClauseChecker::reportResult(int res, int revision) {
 Cadical *ExternalClauseChecker::createLocalSolverInterface(const SolverSetup &solverSetup) {
     auto cadical = new Cadical(solverSetup);
     cadical->setAllowedConflicts(0);
+    cadical->enableTimeout(0.2f);
     return cadical;
 }
 

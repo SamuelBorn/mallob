@@ -16,6 +16,7 @@
 #include "cadical_terminator.hpp"
 #include "cadical_learner.hpp"
 #include "cadical_learn_source.hpp"
+#include "cadical_timeout_terminator.hpp"
 
 class Cadical : public PortfolioSolverInterface {
 
@@ -27,7 +28,7 @@ private:
 	std::vector<std::vector<int> > learnedClauses;
 	std::vector<int> assumptions;
 
-	HordeTerminator terminator;
+    CadicalTimeoutTerminator terminator;
     HordeLearner learner;
 	MallobLearnSource learnSource;
 
@@ -36,6 +37,8 @@ private:
 public:
 	Cadical(const SolverSetup& setup);
 	 ~Cadical();
+
+    void enableTimeout(float timeoutInSeconds) { terminator.enableTimeout(timeoutInSeconds); }
 
 	// Add a (list of) permanent clause(s) to the formula
 	void addLiteral(int lit) override;
@@ -71,7 +74,5 @@ public:
 	bool supportsIncrementalSat() override {return true;}
 	bool exportsConditionalClauses() override {return false;}
 
-    void setAllowedConflicts(int conflicts){
-        solver->limit("conflicts", conflicts);
-    }
+    void setAllowedConflicts(int conflicts) { solver->limit("conflicts", conflicts); }
 };

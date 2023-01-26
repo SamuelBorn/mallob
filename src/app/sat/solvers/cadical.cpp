@@ -111,6 +111,9 @@ SatResult Cadical::solve(size_t numAssumptions, const int* assumptions) {
 		this->assumptions.push_back(lit);
 	}
 
+    // set the starting point for the terminator for timeouts
+    terminator.setSolverStarted();
+
 	// start solving
 	int res = solver->solve();
 	switch (res) {
