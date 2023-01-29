@@ -7,7 +7,6 @@
 #include "util/sys/proc.hpp"
 #include "util/hashing.hpp"
 #include "external_clause_checker.hpp"
-#include "clause_check_order_strategies/clause_checking_order_buffer.hpp"
 #include "app/sat/solvers/cadical_timeout_terminator.hpp"
 
 using namespace SolvingStates;
@@ -241,16 +240,13 @@ void ExternalClauseChecker::diversifyAfterReading() {
 }
 
 void ExternalClauseChecker::runOnce() {
-    std::list<OwnedClause>::iterator clause;
+    //std::string s;
+    while (!_clauses_to_check.empty()) {
+        auto clause = OwnedClause(_clauses_to_check.extract());
+        //s.append(std::to_string(clause.stored_clause.size) + ' ');
+        //_num_clauses_to_check--;
 
-    while (_num_clauses_to_check > 0) {
-
-        {
-            auto lock = _clauses_to_check_mutex.getLock();
-            clause = _clauses_to_check.begin();
-        }
-
-        size_t aSize = clause->stored_clause.size;
+        size_t aSize = clause.stored_clause.size;
         int aLitsArray[aSize];
         int *aLits = aLitsArray;
 
@@ -260,8 +256,8 @@ void ExternalClauseChecker::runOnce() {
             _solver.resume();
 
             for (int i = 0; i < aSize; ++i) {
-                if (clause->stored_clause.begin[i] > _max_var) return;
-                aLits[i] = -1 * clause->stored_clause.begin[i];
+                if (clause.stored_clause.begin[i] > _max_var) return;
+                aLits[i] = -1 * clause.stored_clause.begin[i];
             }
         }
 
@@ -274,12 +270,8 @@ void ExternalClauseChecker::runOnce() {
             aLits = tldAssumptions.data();
         }
 
-        LOG(V5_DEBG, "[CPCS] ECC: Checking Clause\n");
         SatResult res = _solver.solve(aSize, aLits);
-        LOG(V5_DEBG, "[CPCS] ECC: Clause valid: %i\n", res == UNSAT);
-
-        // Un interrupt solver (if it was interrupted)
-        {
+        {  // Un interrupt solver (if it was interrupted)
             auto lock = _state_mutex.getLock();
             _solver.uninterrupt();
             _interrupted = false;
@@ -288,15 +280,10 @@ void ExternalClauseChecker::runOnce() {
         // External clause is applicable -> save to admitted clauses to be fetched later
         if (res == UNSAT) {
             auto lock = _admitted_clauses_mutex.getLock();
-            _admitted_clauses.emplace(clause->stored_clause.copy());
-        }
-
-        {
-            auto lock = _clauses_to_check_mutex.getLock();
-            _clauses_to_check.erase(clause);
-            _num_clauses_to_check--;
+            _admitted_clauses.emplace(clause.stored_clause.copy());
         }
     }
+    //if (s != "")LOG(V4_VVER, "[CPCS] %s\n", s.c_str());
 }
 
 void ExternalClauseChecker::waitWhileSolved() {
@@ -375,22 +362,20 @@ const char *ExternalClauseChecker::toStr() {
 }
 
 void ExternalClauseChecker::submitClausesForTesting(int *externalClausesBuffer, int externalClausesBufferSize) {
-    auto lock = _clauses_to_check_mutex.getLock();
-
     auto reader = BufferReader(externalClausesBuffer, externalClausesBufferSize, _params.strictClauseLengthLimit(), _params.groupClausesByLengthLbdSum(), false);
     Clause c = reader.getNextIncomingClause();
     while (c.begin != nullptr) {
 
         if (_clause_bloom_filter.registerClause(c.begin, c.size)) {
-            _clauses_to_check.emplace_back(c.copy());
-            _num_clauses_to_check++;
+            _clauses_to_check.insert(OwnedClause(c.copy()));
+            //_num_clauses_to_check++;
         } else {
             LOG(V4_VVER, "[CPCS] Clause discarded -> already existed in bloom filter\n");
         }
 
         c = reader.getNextIncomingClause();
     }
-    LOG(V4_VVER, "[CPCS] RECV clauses. To check: %i\n", (int) _num_clauses_to_check);
+    LOG(V4_VVER, "[CPCS] RECV clauses. To check: %i\n", (int) _clauses_to_check.size());
 }
 
 std::vector<int> ExternalClauseChecker::fetchAdmittedClauses() {

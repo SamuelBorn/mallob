@@ -12,18 +12,26 @@
 #include "app/sat/data/owned_clause.hpp"
 #include "app/sat/sharing/filter/clause_filter.hpp"
 
+#include "util/ordered_buffers/fifo_ring_buffer.hpp"
+#include "util/ordered_buffers/lifo_ring_buffer.hpp"
+#include "util/ordered_buffers/min_ring_buffer.hpp"
+#include "util/ordered_buffers/max_ring_buffer.hpp"
+
 class SatEngine;
 
 class ExternalClauseChecker {
 
 private:
-    std::list<OwnedClause> _clauses_to_check;
+    //std::list<OwnedClause> _clauses_to_check;
+    const int _max_clause_count = 1000;
+    MinRingBuffer<OwnedClause> _clauses_to_check_implementation = MinRingBuffer<OwnedClause>(_max_clause_count);
+    SynchronizedOrderedBuffer<OwnedClause> &_clauses_to_check = _clauses_to_check_implementation;
     std::set<OwnedClause> _admitted_clauses;
 
-    Mutex _clauses_to_check_mutex;
+    //Mutex _clauses_to_check_mutex;
     Mutex _admitted_clauses_mutex;
 
-    std::atomic_int _num_clauses_to_check = 0;
+    //std::atomic_int _num_clauses_to_check = 0;
 
     ClauseFilter _clause_bloom_filter;
 

@@ -11,11 +11,15 @@ public:
 
     explicit OwnedClause(const Mallob::Clause clause) : stored_clause(clause) {}
 
+    OwnedClause(OwnedClause const &other) {
+        stored_clause = other.stored_clause.copy();
+    }
+
     virtual ~OwnedClause() {
         free(stored_clause.begin);
     }
 
-    bool operator<(const OwnedClause& other) const {
+    bool operator<(const OwnedClause &other) const {
         return this->stored_clause < other.stored_clause;
     }
 };
