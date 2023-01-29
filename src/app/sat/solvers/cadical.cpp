@@ -116,6 +116,9 @@ SatResult Cadical::solve(size_t numAssumptions, const int* assumptions) {
 
 	// start solving
 	int res = solver->solve();
+
+    terminator.setSolverFinished();
+
 	switch (res) {
 	case 0:
 		return UNKNOWN;

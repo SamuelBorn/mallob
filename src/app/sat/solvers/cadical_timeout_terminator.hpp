@@ -19,9 +19,17 @@ public:
         _solver_started = true;
     }
 
+    void setSolverFinished() {
+        _solver_started = false;
+    }
+
     void enableTimeout(float timeout) {
         _timeout_seconds = timeout;
         _timeout_enabled = true;
+    }
+
+    void disableTimeout() {
+        _timeout_enabled = false;
     }
 
     bool terminate() override {

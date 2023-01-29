@@ -39,6 +39,7 @@ public:
 	 ~Cadical();
 
     void enableTimeout(float timeoutInSeconds) { terminator.enableTimeout(timeoutInSeconds); }
+    void disableTimeout() { terminator.disableTimeout(); }
 
 	// Add a (list of) permanent clause(s) to the formula
 	void addLiteral(int lit) override;
