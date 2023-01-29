@@ -337,11 +337,13 @@ void SatEngine::dumpStats(bool final) {
 void SatEngine::setPaused() {
 	_state = SUSPENDED;
 	for (auto& solver : _solver_threads) solver->setSuspend(true);
+    _external_clause_checker->setSuspend(true);
 }
 
 void SatEngine::unsetPaused() {
 	_state = ACTIVE;
 	for (auto& solver : _solver_threads) solver->setSuspend(false);
+    _external_clause_checker->setSuspend(false);
 }
 
 void SatEngine::terminateSolvers() {
@@ -351,6 +353,8 @@ void SatEngine::terminateSolvers() {
 			solver->setSuspend(false);
 			solver->setTerminate();
 		}
+        _external_clause_checker->setSuspend(false);
+        _external_clause_checker->setTerminate();
 	}
 }
 
