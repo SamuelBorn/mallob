@@ -5,7 +5,7 @@ logs/*
 .api/users
 lib/*/
 build/
-instances/*.cnf
+instances/**/*.cnf
 instances/*.cnf.xz
 instances/*.uri
 upload.sh
