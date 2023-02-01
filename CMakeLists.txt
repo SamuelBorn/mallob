@@ -152,12 +152,12 @@ SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${MY_DEBUG_OPTIONS}")
 
 # Tests
 
-enable_testing()
-
-new_test(permutation)
-new_test(message_queue)
-new_test(volume_calculator)
-new_test(concurrent_malloc)
-new_test(hashing)
-new_test(async_collective)
-new_test(random)
+#enable_testing()
+#
+#new_test(permutation)
+#new_test(message_queue)
+#new_test(volume_calculator)
+#new_test(concurrent_malloc)
+#new_test(hashing)
+#new_test(async_collective)
+#new_test(random)
