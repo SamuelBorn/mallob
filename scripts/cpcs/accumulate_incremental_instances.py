@@ -3,10 +3,10 @@ import shutil
 
 
 def main():
-    base_file_name = "transportg29"
+    base_file_name = "roverg10"
     input_dir = "../../instances/incremental/" + base_file_name
     output_dir = "../../instances/incremental-accumulated/" + base_file_name
-    num_instances = 7
+    num_instances = 6
 
     shutil.copyfile(input_dir + "-0.cnf", output_dir + "-0.cnf")
 
@@ -15,8 +15,8 @@ def main():
             old_p = to_acc.readline()
             new_p_split = old_p.split(" ")
 
-            old_clauses = last_acc.readlines()[1:-1]  # ignore assumptions of old
-            new_clauses = to_acc.readlines()     # ignore problem
+            old_clauses = last_acc.readlines()[1:-1]  # ignore a + p of old
+            new_clauses = to_acc.readlines()
 
             new_p_split[-1] = f"{len(old_clauses) + len(new_clauses) - 1}"
             new_p = " ".join(new_p_split)
