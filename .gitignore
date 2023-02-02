@@ -15,3 +15,4 @@ src/app/register_*.h*
 cmake-build-debug
 lib
 mallob_thread_trace_of_*
+!instances/incremental-accumulated/*
