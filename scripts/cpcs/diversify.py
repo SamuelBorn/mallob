@@ -2,9 +2,15 @@ import os.path
 import shutil
 import random
 import argparse
+import numpy as np
 
 
-def main(input_file_path, n, d):
+def main(input_file_path, overlap, n):
+    # Expected overlap between n clauses when you delete d%: (1-d)^n = overlap
+    # Expected overlap between n clauses when you keep k%: k^n = overlap
+    # k = nthRoot(overlap)
+    keep_clauses_percentage = overlap ** (1 / n)
+
     file_name = os.path.basename(input_file_path)
     output_dir_path = os.path.join(os.path.dirname(input_file_path), "delete_diversified")
     os.makedirs(output_dir_path, exist_ok=True)
@@ -15,21 +21,21 @@ def main(input_file_path, n, d):
             p = lines[0]
             a = lines[-1]
             clauses = lines[1:-1]
-            new_num_clauses = int((1 - d) * len(clauses))
+            num_clauses_to_keep = round(keep_clauses_percentage * len(clauses))
 
             temp_p = p.split(" ")
-            temp_p[-1] = f"{new_num_clauses}\n"
+            temp_p[-1] = f"{num_clauses_to_keep}\n"
             new_p = " ".join(temp_p)
 
             output_file.write(new_p)
-            output_file.writelines(random.sample(clauses, new_num_clauses))
+            output_file.writelines(random.sample(clauses, num_clauses_to_keep))
             output_file.write(a)
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument("-i", "--input", help="Input File Path")
-    parser.add_argument("-d", "--delete", help="Percentage of clauses that should be deleted", type=float)
-    parser.add_argument("-n", "--number", help="Number of problem instances to create", type=int)
+    parser.add_argument("-i", help="Input File Path")
+    parser.add_argument("-o", help="Expected percentage of overlap between instances", type=float)
+    parser.add_argument("-n", help="Number of problem instances to create", type=int)
     args = parser.parse_args()
-    main(args.input, args.number, args.delete)
+    main(args.i, args.o, args.n)

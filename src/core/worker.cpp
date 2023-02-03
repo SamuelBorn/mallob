@@ -237,6 +237,7 @@ void Worker::allGatherGroupIds() {
         job.getInterJobCommunicator().setGroupId(job.getDescription().getGroupId());
         job.getInterJobCommunicator().gatherIntoRing(ring_representatives, _reduction_call_counter);
         job.getInterJobCommunicator().handleOpenJoinRingRequests();
+        LOG(V4_VVER, "[CPCS] Group: %i, %i->%i \n", job.getDescription().getGroupId(), MyMpi::rank(MPI_COMM_WORLD), job.getInterJobCommunicator().getNextRingMemberRank());
     });
 }
 
