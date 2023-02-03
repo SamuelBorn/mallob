@@ -15,8 +15,14 @@ def main(input_file_path, n, d):
             p = lines[0]
             a = lines[-1]
             clauses = lines[1:-1]
-            output_file.write(p)
-            output_file.writelines(random.sample(clauses, int((1 - d) * len(clauses))))
+            new_num_clauses = int((1 - d) * len(clauses))
+
+            temp_p = p.split(" ")
+            temp_p[-1] = f"{new_num_clauses}\n"
+            new_p = " ".join(temp_p)
+
+            output_file.write(new_p)
+            output_file.writelines(random.sample(clauses, new_num_clauses))
             output_file.write(a)
 
 

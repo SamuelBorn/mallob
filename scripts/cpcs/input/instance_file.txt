@@ -1,2 +1,3 @@
-instances/r3sat_300.cnf
-instances/r3sat_300.cnf
+/home/sam/Dropbox/semester7/Bachelorarbeit/mallob/instances/r3sat_300.cnf
+/home/sam/Dropbox/semester7/Bachelorarbeit/mallob/instances/r3sat_300.cnf
+/home/sam/Dropbox/semester7/Bachelorarbeit/mallob/instances/r3sat_300.cnf

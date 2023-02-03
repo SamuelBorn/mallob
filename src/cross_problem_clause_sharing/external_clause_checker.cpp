@@ -370,7 +370,7 @@ void ExternalClauseChecker::submitClausesForTesting(int *externalClausesBuffer, 
             _clauses_to_check.insert(OwnedClause(c.copy()));
             //_num_clauses_to_check++;
         } else {
-            LOG(V4_VVER, "[CPCS] Clause discarded -> already existed in bloom filter\n");
+            LOG(V5_DEBG, "[CPCS] Clause discarded -> already existed in bloom filter\n");
         }
 
         c = reader.getNextIncomingClause();
