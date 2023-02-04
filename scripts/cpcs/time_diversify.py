@@ -12,7 +12,7 @@ def main(input_file_path, output_file_path, step_size, tests_per_percentage, thr
     with open(output_file_path, "w") as f:
         f.write("{}")  # write empty json for easy handling
 
-    for overlap in numpy.arange(1, threshold, -step_size):
+    for overlap in numpy.arange(threshold, 1, step_size):
         results = []
         for i in range(tests_per_percentage):
 
