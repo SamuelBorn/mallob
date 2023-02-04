@@ -9,7 +9,8 @@ def main(input_file_path, overlap, n) -> list[str]:
     # Expected overlap between n clauses when you delete d%: (1-d)^n = overlap
     # Expected overlap between n clauses when you keep k%: k^n = overlap
     # k = nthRoot(overlap)
-    keep_clauses_percentage = overlap ** (1 / n)
+    # keep_clauses_percentage = overlap ** (1 / n)
+    keep_clauses_percentage = overlap
 
     file_name = os.path.basename(input_file_path)
     output_dir_path = os.path.join(os.path.dirname(input_file_path), "delete_diversified")

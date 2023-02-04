@@ -33,11 +33,11 @@ def main(input_file_path, output_file_path, step_size, tests_per_percentage, thr
             results.append(end - start)
             print(end - start)
 
-            with open(output_file_path, "r") as f:
-                output = json.load(f)
-                output[overlap] = results
-            with open(output_file_path, "w") as f:
-                f.write(json.dumps(output))
+        with open(output_file_path, "r") as f:
+            output = json.load(f)
+            output[overlap] = results
+        with open(output_file_path, "w") as f:
+            f.write(json.dumps(output))
 
 
 if __name__ == '__main__':
@@ -45,7 +45,7 @@ if __name__ == '__main__':
     parser.add_argument("-i", help="Input Instance", required=True)
     parser.add_argument("-o", help="Output File", required=True)
     parser.add_argument("-s", help="Percentage Step Size of Clauses to delete", type=float, default=0.01)
-    parser.add_argument("-n", help="Tests to perform per clauses to delete", type=int, default=10)
+    parser.add_argument("-n", help="Tests to perform per clauses to delete", type=int, default=20)
     parser.add_argument("-d", help="Max Percentage to clauses to delete", type=float, default=0.8)
     args = parser.parse_args()
     main(args.i, args.o, args.s, args.n, args.d)
