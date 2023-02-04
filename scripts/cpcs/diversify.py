@@ -5,7 +5,7 @@ import argparse
 import numpy as np
 
 
-def main(input_file_path, overlap, n) -> list[str]:
+def main(input_file_path, overlap, n):
     # Expected overlap between n clauses when you delete d%: (1-d)^n = overlap
     # Expected overlap between n clauses when you keep k%: k^n = overlap
     # k = nthRoot(overlap)

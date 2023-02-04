@@ -22,7 +22,7 @@ def main(input_file_path, output_file_path, step_size, tests_per_percentage, thr
                 for div in diversified:
                     f.write(div + "\n")
 
-            print(f"Solve {overlap} - {i}/{tests_per_percentage}: ", end="")
+            print(f"Solve {overlap} - {i}/{tests_per_percentage}: ")
             start = time.time()
             os.system(f'/usr/lib64/openmpi/bin/mpirun -np 6 build/mallob -c=1 -ajpc=3 -ljpc=6 -J=3 \
                         -job-desc-template={instance_file} \
