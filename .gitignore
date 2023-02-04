@@ -17,3 +17,5 @@ lib
 mallob_thread_trace_of_*
 !instances/incremental-accumulated/*
 scripts/cpcs/output/*
+**/__pycache__
+timing_template.txt

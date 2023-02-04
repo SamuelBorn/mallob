@@ -5,7 +5,7 @@ import argparse
 import numpy as np
 
 
-def main(input_file_path, overlap, n):
+def main(input_file_path, overlap, n) -> list[str]:
     # Expected overlap between n clauses when you delete d%: (1-d)^n = overlap
     # Expected overlap between n clauses when you keep k%: k^n = overlap
     # k = nthRoot(overlap)
@@ -30,6 +30,8 @@ def main(input_file_path, overlap, n):
             output_file.write(new_p)
             output_file.writelines(random.sample(clauses, num_clauses_to_keep))
             output_file.write(a)
+
+    return [output_dir_path + f"/diversified-{i}-{file_name}" for i in range(n)]
 
 
 if __name__ == '__main__':
