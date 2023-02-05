@@ -486,3 +486,7 @@ void SatProcessAdapter::freeSharedMemory() {
     }
     _shmem.clear();
 }
+
+void SatProcessAdapter::setCheckExternalClauses(bool checkClauses) {
+    _hsm->checkExternalClauses = checkClauses;
+}

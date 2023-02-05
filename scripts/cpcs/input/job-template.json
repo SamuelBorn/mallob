@@ -9,5 +9,6 @@
     "cpu-limit": "0", 
     "max-demand": 0, 
     "configuration": {},
-    "group_id": "group0"
+    "group_id": "group0",
+    "check_external": true
 }

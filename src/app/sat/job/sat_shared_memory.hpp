@@ -15,6 +15,7 @@ struct SatSharedMemory {
     int fSize;
     int aSize;
     int desiredRevision;
+    bool checkExternalClauses;
 
     // Instructions parent->child
     bool doBegin;
@@ -55,7 +56,7 @@ struct SatSharedMemory {
     int externalClausesBufferSize;
     int externalClausesBufferMaxSize;
     Checksum importChecksum;
-    
+
     // Clause buffers: child->parent
     int exportBufferTrueSize;
     Checksum exportChecksum;

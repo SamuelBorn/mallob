@@ -49,7 +49,7 @@ void JobDescription::writeMetadata() {
     n = sizeof(int);         memcpy(data->data()+i, &_application_id, n); i += n;
     n = sizeof(bool);        memcpy(data->data()+i, &_incremental, n); i += n;
     n = sizeof(int);         memcpy(data->data()+i, &_group_id, n); i += n;
-    n = sizeof(bool);        memcpy(data->data()+i, &_check_shared, n); i += n;
+    n = sizeof(bool);        memcpy(data->data()+i, &_check_external, n); i += n;
     n = sizeof(Checksum);    memcpy(data->data()+i, &_checksum, n); i += n;
     
     auto configSerialized = _app_config.serialize();
@@ -165,7 +165,7 @@ void JobDescription::deserialize() {
     n = sizeof(int);         memcpy(&_application_id, latestData->data()+i, n);  i += n;
     n = sizeof(bool);        memcpy(&_incremental, latestData->data()+i, n);     i += n;
     n = sizeof(int);         memcpy(&_group_id, latestData->data()+i, n);        i += n;
-    n = sizeof(bool);        memcpy(&_check_shared, latestData->data()+i, n);    i += n;
+    n = sizeof(bool);        memcpy(&_check_external, latestData->data() + i, n); i += n;
     n = sizeof(Checksum);    memcpy(&_checksum, latestData->data()+i, n);        i += n;
     // size of config
     memcpy(&n, latestData->data()+i, sizeof(int)); i += sizeof(int);

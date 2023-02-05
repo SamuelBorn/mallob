@@ -128,6 +128,8 @@ public:
     void digestClausesWithoutFilter(const std::vector<int>& clauses);
     void returnClauses(const std::vector<int>& clauses);
 
+    void setCheckExternalClauses(bool checkClauses);
+
     void dumpStats();
     
     enum SubprocessStatus {NORMAL, FOUND_RESULT, CRASHED};
