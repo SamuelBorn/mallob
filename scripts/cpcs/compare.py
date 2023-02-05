@@ -4,12 +4,13 @@ import os
 import time
 
 
-def main(input_file_path, output_file_path, n):
+def main(single_problem, instance_file, output_file_path, n):
     num_problems = 2
-    instance_file = "scripts/cpcs/output/timing_instace_file.txt"
-    with open(instance_file, "w") as f:
-        for _ in range(num_problems):
-            f.write(input_file_path + "\n")
+    if not instance_file:
+        instance_file = "scripts/cpcs/output/timing_instace_file.txt"
+        with open(instance_file, "w") as f:
+            for _ in range(num_problems):
+                f.write(single_problem + "\n")
 
     results = {}
     for idx, job_template in enumerate(["scripts/cpcs/input/job-template.json", "scripts/cpcs/input/job-template-nogroup.json"]):
@@ -17,7 +18,7 @@ def main(input_file_path, output_file_path, n):
         for i in range(n):
             print(f"Solve {i}/{n}: {job_template}")
             start = time.time()
-            os.system(f'mpirun -np 4 build/mallob -v=1 -c=1 -ajpc={num_problems} -ljpc={2 * num_problems} -J={num_problems} \
+            os.system(f'mpirun -np 4 --bind-to core build/mallob -v=1 -c=1 -ajpc={num_problems} -ljpc={2 * num_problems} -J={num_problems} \
                         -job-desc-template={instance_file} \
                         -job-template={job_template} \
                         -client-template=scripts/cpcs/input/client-template.json -pls=0 \
@@ -32,8 +33,9 @@ def main(input_file_path, output_file_path, n):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument("-i", help="Input Instance", required=True)
+    parser.add_argument("-p", help="Input a single Problem file (will get duplicated)")
+    parser.add_argument("-i", help="Input Instance File (multiple instances)")
     parser.add_argument("-o", help="Output File", required=True)
     parser.add_argument("-n", help="Tests to perform", type=int, default=20)
     args = parser.parse_args()
-    main(args.i, args.o, args.n)
+    main(args.i, args.p, args.o, args.n)
