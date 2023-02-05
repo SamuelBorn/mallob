@@ -34,6 +34,7 @@ private:
 	std::vector<std::shared_ptr<SolverThread>> _obsolete_solver_threads;
 
     std::shared_ptr<ExternalClauseChecker> _external_clause_checker;
+    bool _external_clause_checker_already_started = false;
 
 	struct RevisionData {
 		size_t fSize;

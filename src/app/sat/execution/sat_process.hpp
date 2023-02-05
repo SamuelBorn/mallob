@@ -147,7 +147,7 @@ public:
 
             // Check if clauses should be exported
             if (_hsm->doExport && !_hsm->didExport) {
-                _engine.incorporateAdmittedExternalClauses();
+                if (_hsm->checkExternalClauses) _engine.incorporateAdmittedExternalClauses();  // only fetch if solver is doing something
 
                 LOGGER(_log, V5_DEBG, "DO export clauses\n");
                 // Collect local clauses, put into shared memory

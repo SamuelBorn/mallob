@@ -169,7 +169,6 @@ void SatEngine::appendRevision(int revision, size_t fSize, const int* fLits, siz
 
     if (revision == 0) {
         _external_clause_checker = std::make_unique<ExternalClauseChecker>(_params, _config, _solver_setup, fSize, fLits, aSize, aLits, 0);
-        _external_clause_checker->start();
     }
 	for (size_t i = 0; i < _num_solvers; i++) {
 		if (revision == 0) {
@@ -400,6 +399,10 @@ void SatEngine::checkExternalClausesForImport(int *externalClausesBuffer, int ex
     if (!_external_clause_checker) {
         LOG(V4_VVER, "[CPCS] Engine: Submit failed, ECC not init\n");
         return;
+    }
+    if (!_external_clause_checker_already_started) {
+        _external_clause_checker_already_started = true;
+        _external_clause_checker->start();
     }
     _external_clause_checker->submitClausesForTesting(externalClausesBuffer, externalClausesBufferSize);
 }
