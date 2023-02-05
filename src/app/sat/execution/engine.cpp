@@ -409,7 +409,6 @@ void SatEngine::incorporateAdmittedExternalClauses() {
         LOG(V4_VVER, "[CPCS] Engine: Incorporate failed, ECC not init\n");
         return;
     }
-    if (!_external_clause_checker->hasAdmittedClauses()) return;
     auto clauses = _external_clause_checker->fetchAdmittedClauses();
     if (clauses.empty()) return;
     digestSharingWithoutFilter(clauses.data(), clauses.size());

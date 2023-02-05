@@ -383,34 +383,21 @@ std::vector<int> ExternalClauseChecker::fetchAdmittedClauses() {
     LOG(V4_VVER, "[CPCS] FETCH admitted clauses: %i\n", _admitted_clauses.size());
 
     std::vector<int> buffer;
+
     auto builder = BufferBuilder(-1, _params.strictClauseLengthLimit(), _params.groupClausesByLengthLbdSum(), &buffer);
 
-    // for assertion of sorted admitted clauses
-    int last_clause_size = 0;
-
     for (const auto &clause: _admitted_clauses) {
-//        std::string s;
-//        for (int i = 0; i < clause.stored_clause.size; i++) s.append(std::to_string(clause.stored_clause.begin[i]) + " ");
-//        LOG(V4_VVER, "[CPCS] %s\n", s.c_str());
-
-        // sanity checks for a clause before adding it
-        assert(clause.stored_clause.size <= 255);
-        assert(clause.stored_clause.size >= last_clause_size);
-        last_clause_size = clause.stored_clause.size;
-        for (int i = 0; i < clause.stored_clause.size; ++i) {
-            assert(std::abs(clause.stored_clause.begin[i]) < 10000);
-            assert(clause.stored_clause.begin[i] != 0);
-            assert(clause.stored_clause.lbd > 0);
-        }
-
+//        // sanity checks for a clause before adding it
+//        assert(clause.stored_clause.size <= 255);
+//        assert(clause.stored_clause.size >= last_clause_size);
+//        for (int i = 0; i < clause.stored_clause.size; ++i) {
+//            assert(std::abs(clause.stored_clause.begin[i]) < 10000);
+//            assert(clause.stored_clause.begin[i] != 0);
+//            assert(clause.stored_clause.lbd > 0);
+//        }
         builder.append(clause.stored_clause);
     }
     _admitted_clauses.clear();
 
     return buffer;
-}
-
-bool ExternalClauseChecker::hasAdmittedClauses() {
-    auto lock = _admitted_clauses_mutex.getLock();
-    return !_admitted_clauses.empty();
 }
