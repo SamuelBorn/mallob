@@ -38,4 +38,4 @@ if __name__ == '__main__':
     parser.add_argument("-o", help="Output File", required=True)
     parser.add_argument("-n", help="Tests to perform", type=int, default=20)
     args = parser.parse_args()
-    main(args.i, args.p, args.o, args.n)
+    main(args.p, args.i, args.o, args.n)

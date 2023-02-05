@@ -35,4 +35,4 @@ if __name__ == '__main__':
     parser.add_argument("-d", help="Num clauses to delete", type=float, required=True)
     parser.add_argument("-n", help="Number of problem instances to create", type=int, required=True)
     args = parser.parse_args()
-    main(args.i, args.o, args.n)
+    main(args.i, args.d, args.n)

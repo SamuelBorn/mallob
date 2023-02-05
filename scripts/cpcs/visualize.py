@@ -15,8 +15,8 @@ def main(input_file_path):
     for key, value in data.items():
         keys = [float(key)] * len(value)
         times = [float(t) for t in value]
-        plt.scatter(keys, times, s=5)
-        plt.scatter(float(key), sum(times) / len(times))
+        plt.scatter(keys, times, s=5, c='blue')
+        plt.scatter(float(key), sum(times) / len(times), c='red')
 
     plt.show()
 
