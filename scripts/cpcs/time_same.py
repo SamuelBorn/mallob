@@ -10,19 +10,20 @@ def main(input_file_path, output_file_path, n):
         for _ in range(num_group_members):
             f.write(input_file_path + "\n")
 
-    for i in range(n):
-        print(f"Solve {i}/{n}")
-        start = time.time()
-        os.system(f'/usr/lib64/openmpi/bin/mpirun -np 6 build/mallob -c=1 -ajpc=3 -ljpc=6 -J=3 \
-                        -job-desc-template={instance_file} \
-                        -job-template=scripts/cpcs/input/job-template.json \
-                        -client-template=scripts/cpcs/input/client-template.json -pls=0 \
-                        > /dev/null && pkill mallob')
-        end = time.time()
-        print(end - start)
+    for job_template in ["scripts/cpcs/input/job-template.json", "scripts/cpcs/input/job-template-nogroup.json"]:
+        for i in range(n):
+            print(f"Solve {i}/{n}: {job_template}")
+            start = time.time()
+            os.system(f'/usr/lib64/openmpi/bin/mpirun -np 6 build/mallob -c=1 -ajpc=3 -ljpc=6 -J=3 \
+                            -job-desc-template={instance_file} \
+                            -job-template={job_template} \
+                            -client-template=scripts/cpcs/input/client-template.json -pls=0 \
+                            > /dev/null && pkill mallob')
+            end = time.time()
+            print(end - start)
 
-        with open(output_file_path, "a") as f:
-            f.write(f"{end - start}\n")
+            with open(output_file_path, "a") as f:
+                f.write(f"{end - start}\n")
 
 
 if __name__ == '__main__':
