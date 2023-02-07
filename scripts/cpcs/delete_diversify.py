@@ -13,9 +13,16 @@ def main(input_file_path, clauses_to_delete, n):
     for i in range(n):
         with open(input_file_path, "r") as input_file, open(output_dir_path + f"/diversified-{i}-{file_name}", "w") as output_file:
             lines = input_file.readlines()
-            p = lines[0]
-            a = lines[-1]
-            clauses = lines[1:-1]
+            clauses = []
+            for line in lines:
+                if line.startswith("c"):
+                    continue
+                elif line.startswith("p"):
+                    p = line
+                elif line.startswith("a"):
+                    a = line
+                else:
+                    clauses.append(line)
             num_clauses_to_keep = round(len(clauses) - clauses_to_delete)
 
             temp_p = p.split(" ")
