@@ -28,6 +28,11 @@ private:
     SynchronizedOrderedBuffer<OwnedClause> &_clauses_to_check = _clauses_to_check_implementation;
     std::set<OwnedClause> _admitted_clauses;
 
+    std::atomic_int buffer_full = 0;
+    std::atomic_int admitted = 0;
+    std::atomic_int rejected = 0;
+    std::atomic_int timeouted = 0;
+
     //Mutex _clauses_to_check_mutex;
     Mutex _admitted_clauses_mutex;
 

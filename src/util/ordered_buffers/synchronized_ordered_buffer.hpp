@@ -5,7 +5,7 @@ class SynchronizedOrderedBuffer {
 public:
     virtual ~SynchronizedOrderedBuffer() = default;
 
-    virtual void insert(T element) = 0;
+    virtual bool insert(T element) = 0;
 
     virtual T extract() = 0;
 

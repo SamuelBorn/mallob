@@ -14,17 +14,18 @@ public:
     explicit MinRingBuffer(const size_t maxClauseCount) : _max_clause_count(maxClauseCount) {}
 
     // new elements that dont fit get discarded
-    void insert(T element) override {
+    bool insert(T element) override {
         auto lock = _clauses_mutex.getLock();
         if (_elements.size() >= _max_clause_count) {
             auto last_element_iterator = std::prev(_elements.end());
             if (element < *last_element_iterator) {
                 _elements.erase(last_element_iterator);
             } else {
-                return;
+                return false;
             }
         };
         _elements.insert(element);
+        return true;
     }
 
     T extract() override {

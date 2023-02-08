@@ -281,6 +281,11 @@ void ExternalClauseChecker::runOnce() {
         if (res == UNSAT) {
             auto lock = _admitted_clauses_mutex.getLock();
             _admitted_clauses.emplace(clause.stored_clause.copy());
+            admitted++;
+        } else if (res == SAT) {
+            rejected++;
+        } else {
+            timeouted++;
         }
     }
     //if (s != "")LOG(V4_VVER, "[CPCS] %s\n", s.c_str());
@@ -367,7 +372,7 @@ void ExternalClauseChecker::submitClausesForTesting(int *externalClausesBuffer, 
     while (c.begin != nullptr) {
 
         if (_clause_bloom_filter.registerClause(c.begin, c.size)) {
-            _clauses_to_check.insert(OwnedClause(c.copy()));
+            if (!_clauses_to_check.insert(OwnedClause(c.copy()))) buffer_full++;
             //_num_clauses_to_check++;
         } else {
             LOG(V5_DEBG, "[CPCS] Clause discarded -> already existed in bloom filter\n");
@@ -380,6 +385,10 @@ void ExternalClauseChecker::submitClausesForTesting(int *externalClausesBuffer, 
 
 std::vector<int> ExternalClauseChecker::fetchAdmittedClauses() {
     auto lock = _admitted_clauses_mutex.getLock();
+    LOG(V4_VVER, "[CPCS] Buffer Full: %i\n", (int) buffer_full);
+    LOG(V4_VVER, "[CPCS] Admitted: %i\n", (int) admitted);
+    LOG(V4_VVER, "[CPCS] Rejected: %i\n", (int) rejected);
+    LOG(V4_VVER, "[CPCS] Timeout: %i\n", (int) timeouted);
     LOG(V4_VVER, "[CPCS] FETCH admitted clauses: %i\n", _admitted_clauses.size());
 
     std::vector<int> buffer;

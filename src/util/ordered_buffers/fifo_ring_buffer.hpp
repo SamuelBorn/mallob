@@ -15,10 +15,11 @@ public:
     explicit FIFORingBuffer(const size_t maxClauseCount) : _max_clause_count(maxClauseCount) {}
 
     // new elements that dont fit get discarded
-    void insert(T element) override {
+    bool insert(T element) override {
         auto lock = _clauses_mutex.getLock();
-        if (_elements.size() >= _max_clause_count) return;
+        if (_elements.size() >= _max_clause_count) return false;
         _elements.push(element);
+        return true;
     }
 
     T extract() override {
