@@ -12,12 +12,11 @@ def main(input_file_path):
     with open(input_file_path) as f:
         data = json.load(f)
 
-    for key, value in data.items():
-        keys = [float(key)] * len(value)
-        times = [float(t) for t in value]
-        plt.scatter(keys, times, s=5, c='blue')
-        plt.scatter(float(key), sum(times) / len(times), c='red')
+    plt.rc('font', size=18)
+    plt.figure(figsize=(8, 14))
 
+    plt.boxplot(data.values(), labels=data.keys())
+    plt.ylabel("Execution time (seconds)")
     plt.show()
 
 
