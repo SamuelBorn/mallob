@@ -42,6 +42,6 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("-v", help="Num vars in problem", type=int, default=1000)
     parser.add_argument("-o", help="Overlap between problems", type=float, default=0.99)
-    parser.add_argument("-n", help="Number of problem instances to create", type=int, default=3)
+    parser.add_argument("-n", help="Number of problem instances to create", type=int, default=4)
     args = parser.parse_args()
     main(args.v, args.o, args.n)
