@@ -375,7 +375,7 @@ void ExternalClauseChecker::submitClausesForTesting(int *externalClausesBuffer, 
 
         c = reader.getNextIncomingClause();
     }
-    LOG(V4_VVER, "[CPCS] RECV clauses. To check: %i\n", (int) _clauses_to_check.size());
+    LOG(V5_DEBG, "[CPCS] RECV clauses. To check: %i\n", (int) _clauses_to_check.size());
 }
 
 std::vector<int> ExternalClauseChecker::fetchAdmittedClauses() {

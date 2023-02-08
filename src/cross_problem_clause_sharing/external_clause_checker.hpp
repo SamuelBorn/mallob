@@ -23,8 +23,8 @@ class ExternalClauseChecker {
 
 private:
     //std::list<OwnedClause> _clauses_to_check;
-    const int _max_clause_count = 1000;
-    MinRingBuffer<OwnedClause> _clauses_to_check_implementation = MinRingBuffer<OwnedClause>(_max_clause_count);
+    const int _max_clause_count = 500;
+    LIFORingBuffer<OwnedClause> _clauses_to_check_implementation = LIFORingBuffer<OwnedClause>(_max_clause_count);
     SynchronizedOrderedBuffer<OwnedClause> &_clauses_to_check = _clauses_to_check_implementation;
     std::set<OwnedClause> _admitted_clauses;
 
