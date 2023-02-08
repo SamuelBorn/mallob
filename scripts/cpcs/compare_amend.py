@@ -19,14 +19,15 @@ def main(num_vars, num_jobs, min_overlap, step_size, num_tests):
         for i in range(num_tests):
             instances = f"scripts/cpcs/temp/instances"
             with open(instances, "w") as f:
-                f.writelines(diversify_amend.main(num_vars, o, num_jobs))
+                f.writelines(line + "\n" for line in diversify_amend.main(num_vars, o, num_jobs))
 
             print(f"Nogroup {i}/{num_tests}")
             start = time.time()
-            os.system(f'mpirun -np {num_cores} --bind-to core build/mallob -v=1 -c=1 -ajpc={num_jobs} -ljpc={2 * num_jobs} -J={num_jobs} \
+            os.system(f'mpirun -np {num_cores} --bind-to core build/mallob -v=4 -c=1 -ajpc={num_jobs} -ljpc={2 * num_jobs} -J={num_jobs} \
                         -job-desc-template={instances} \
                         -job-template=scripts/cpcs/input/job-nogroup.json \
                         -client-template=templates/client-template.json -pls=0 \
+                        | grep -i "cpcs\|exited\|error\|warn\|solution\|over-due\|RESPONSE_TIME\|idle" \
                         && pkill mallob')
             end = time.time()
             print(end - start)
@@ -34,10 +35,11 @@ def main(num_vars, num_jobs, min_overlap, step_size, num_tests):
 
             print(f"Group {i}/{num_tests}")
             start = time.time()
-            os.system(f'mpirun -np {num_cores} --bind-to core build/mallob -v=1 -c=1 -ajpc={num_jobs} -ljpc={2 * num_jobs} -J={num_jobs} \
+            os.system(f'mpirun -np {num_cores} --bind-to core build/mallob -v=4 -c=1 -ajpc={num_jobs} -ljpc={2 * num_jobs} -J={num_jobs} \
                         -job-desc-template={instances} \
                         -job-template=scripts/cpcs/input/job-group-check.json \
                         -client-template=templates/client-template.json -pls=0 \
+                        | grep -i "cpcs\|exited\|error\|warn\|solution\|over-due\|RESPONSE_TIME\|idle" \
                         && pkill mallob')
             end = time.time()
             print(end - start)
