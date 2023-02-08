@@ -5,7 +5,7 @@ import random
 import argparse
 import numpy
 import time
-import delete_diversify
+import diversify_delete
 
 
 def main(input_file_path, output_file_path, step_size, n, max_clause_delete):

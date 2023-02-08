@@ -13,7 +13,7 @@ def main(single_problem, instance_file, output_file_path, n):
                 f.write(single_problem + "\n")
 
     results = {}
-    for idx, job_template in enumerate(["scripts/cpcs/input/job-template.json", "scripts/cpcs/input/job-template-nogroup.json"]):
+    for idx, job_template in enumerate(["scripts/cpcs/input/job-group-check.json", "scripts/cpcs/input/job-nogroup.json"]):
         results[idx] = []
         for i in range(n):
             print(f"Solve {i}/{n}: {job_template}")
@@ -21,7 +21,7 @@ def main(single_problem, instance_file, output_file_path, n):
             os.system(f'mpirun -np 4 --bind-to core build/mallob -v=1 -c=1 -ajpc={num_problems} -ljpc={2 * num_problems} -J={num_problems} \
                         -job-desc-template={instance_file} \
                         -job-template={job_template} \
-                        -client-template=scripts/cpcs/input/client-template.json -pls=0 \
+                        -client-template=templates/client-template.json -pls=0 \
                         && pkill mallob')
             end = time.time()
             print(end - start)

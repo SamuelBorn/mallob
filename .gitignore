@@ -19,3 +19,4 @@ mallob_thread_trace_of_*
 scripts/cpcs/output/*
 **/__pycache__
 timing_template.txt
+scripts/cpcs/temp
