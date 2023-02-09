@@ -55,4 +55,4 @@ if __name__ == '__main__':
     parser.add_argument("-c", help="Num cores to execute on", type=int, default=4)
     parser.add_argument("-t", help="Timeout in seconds", type=int, default=180)
     args = parser.parse_args()
-    main(args.v, args.j, args.m, args.s, args.n, args.c)
+    main(args.v, args.j, args.m, args.s, args.n, args.c, args.t)
