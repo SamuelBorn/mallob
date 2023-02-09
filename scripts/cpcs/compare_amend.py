@@ -1,6 +1,11 @@
 import argparse
+import datetime
+import subprocess
 import json
 import os
+import time
+import datetime
+
 import diversify_amend
 import numpy as np
 
@@ -19,18 +24,19 @@ def main(num_vars, num_jobs, min_overlap, step_size, num_tests, num_cores):
             with open(instances, "w") as f:
                 f.writelines(line + "\n" for line in diversify_amend.main(num_vars, overlap, num_jobs))
 
-            for identifier in ["nogroup", "group"]:
-                print(f"{identifier} {i}/{num_tests}")
-                output = os.popen(f'mpirun -np {num_cores} --bind-to core build/mallob -v=2 -c=1 -ajpc={num_jobs} -ljpc={2 * num_jobs} -J={num_jobs} \
-                                    -job-desc-template={instances} \
-                                    -job-template=scripts/cpcs/input/job-{identifier}.json \
-                                    -client-template=templates/client-template.json').read()
-                filtered = [float(line.split(" ")[4]) for line in output.splitlines() if "RESPONSE_TIME" in line]
+            for identifier in ["nogroup", "group-check"]:
+                print(f"{identifier}:{overlap}: {i}/{num_tests}    ->    {datetime.datetime.now()}")
+                output = subprocess.check_output(f'mpirun -np {num_cores} --bind-to core build/mallob '
+                                                 f'-jwl=180 -v=2 -c=1 -ajpc={num_jobs} -ljpc={2 * num_jobs} -J={num_jobs} '
+                                                 f'-job-desc-template={instances} '
+                                                 f'-job-template=scripts/cpcs/input/job-{identifier}.json '
+                                                 f'-client-template=templates/client-template.json', shell=True)
+                filtered = [float(line.split(" ")[4]) for line in output.decode("utf-8").split("\n") if "RESPONSE_TIME" in line]
                 results_nogroup[overlap].append(sum(filtered))
-                print(sum(filtered))
+                print(sum(filtered), " -> ", filtered)
 
-                with open("scripts/cpcs/output/{identifier}.json", "w") as f:
-                    if identifier == "group":
+                with open(f"scripts/cpcs/output/{identifier}.json", "w") as f:
+                    if identifier == "group-check":
                         f.write(json.dumps(results_group))
                     else:
                         f.write(json.dumps(results_nogroup))
@@ -43,6 +49,6 @@ if __name__ == '__main__':
     parser.add_argument("-m", help="Min overlap between problems", type=float, default=0.97)
     parser.add_argument("-s", help="Step size of overlap", type=float, default=0.01)
     parser.add_argument("-n", help="Tests to perform", type=int, default=10)
-    parser.add_argument("-c", help="Num cores to execute on", type=int, default=16)
+    parser.add_argument("-c", help="Num cores to execute on", type=int, default=4)
     args = parser.parse_args()
     main(args.v, args.j, args.m, args.s, args.n, args.c)

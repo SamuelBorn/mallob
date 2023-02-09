@@ -1,14 +1,9 @@
-{ 
-    "application": "SAT", 
-    "arrival": 0, 
-    "dependencies": [], 
-    "user": "admin", 
-    "name": "templated-job",
-    "priority": 1, 
-    "wallclock-limit": "0", 
-    "cpu-limit": "0", 
-    "max-demand": 0, 
-    "configuration": {},
-    "group_id": "group0",
+{
+    "user": "born",
+    "name": "group-check",
+    "application": "SAT",
+    "wallclock-limit": "4m",
+    "cpu-limit": "7h",
+    "group": "group-check-0",
     "check_external": true
 }
