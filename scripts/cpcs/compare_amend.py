@@ -8,6 +8,7 @@ import datetime
 
 import diversify_amend
 import numpy as np
+import compare
 
 
 def main(num_vars, num_jobs, min_overlap, step_size, num_tests, num_cores, timeout):
@@ -20,20 +21,13 @@ def main(num_vars, num_jobs, min_overlap, step_size, num_tests, num_cores, timeo
         results_nogroup[overlap] = []
 
         for i in range(num_tests):
-            instances = f"scripts/cpcs/temp/instances"
-            with open(instances, "w") as f:
+            instance_file = f"scripts/cpcs/temp/instance_file"
+            with open(instance_file, "w") as f:
                 f.writelines(line + "\n" for line in diversify_amend.main(num_vars, overlap, num_jobs))
 
             for identifier in ["nogroup", "group-check"]:
                 print(f"{datetime.datetime.now()} - {overlap} - {i:02d}/{num_tests} - {identifier}")
-                output = subprocess.check_output(f'mpirun -np {num_cores} --bind-to core build/mallob '
-                                                 f'-jwl={timeout} -v=2 -c=1 -ajpc={num_jobs} -ljpc={2 * num_jobs} -J={num_jobs} '
-                                                 f'-job-desc-template={instances} '
-                                                 f'-job-template=scripts/cpcs/input/job-{identifier}.json '
-                                                 f'-client-template=templates/client-template.json', shell=True)
-
-                filtered = [float(line.split(" ")[4]) for line in output.decode("utf-8").split("\n") if "RESPONSE_TIME" in line]
-                time_acc = sum(filtered) if len(filtered) >= num_jobs else 2 * timeout
+                time_acc = compare.run_once(timeout, instance_file, num_jobs, num_cores, identifier)
                 print(time_acc)
 
                 with open(f"scripts/cpcs/output/{identifier}.json", "w") as f:

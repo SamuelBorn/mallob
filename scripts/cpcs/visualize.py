@@ -6,22 +6,24 @@ import argparse
 import numpy
 import time
 import matplotlib.pyplot as plt
+import sys
 
 
-def main(input_file_path):
-    with open(input_file_path) as f:
-        data = json.load(f)
-
+def main():
     plt.rc('font', size=18)
     plt.figure(figsize=(8, 14))
-
-    plt.boxplot(data.values(), labels=data.keys())
     plt.ylabel("Execution time (seconds)")
+
+    for fileidx, file in enumerate(sys.argv[1:]):
+        with open(file) as f:
+            data = json.load(f)
+
+        if fileidx == 0:
+            plt.boxplot(data.values(), labels=[round(float(key), 3) for key in data.keys()], medianprops=dict(linewidth=3, color='green'), boxprops=dict(color='blue'))
+        else:
+            plt.boxplot(data.values(), labels=[round(float(key), 3) for key in data.keys()], medianprops=dict(linewidth=3, color='orange'), boxprops=dict(color='red'))
     plt.show()
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-i", help="INPUT File", required=True)
-    args = parser.parse_args()
-    main(args.i)
+    main()
