@@ -2,6 +2,6 @@
     "user": "born",
     "name": "group-check",
     "application": "SAT",
-    "wallclock-limit": "3m",
-    "cpu-limit": "7h"
+    "wallclock-limit": "4m",
+    "cpu-limit": "8h"
 }

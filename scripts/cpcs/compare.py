@@ -8,7 +8,7 @@ import subprocess
 
 def main(single_problem, instance_file, output_file_path, n, j, num_cores, timeout):
     if not instance_file:
-        instance_file = "scripts/cpcs/temp/instances"
+        instance_file = "scripts/cpcs/temp/instance_file"
         with open(instance_file, "w") as f:
             for _ in range(j):
                 f.write(single_problem + "\n")

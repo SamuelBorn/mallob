@@ -1,3 +1,2 @@
-scripts/cpcs/temp/diversified-0.cnf
-scripts/cpcs/temp/diversified-1.cnf
-scripts/cpcs/temp/diversified-2.cnf
+instances/unsat1000.cnf
+instances/unsat1000.cnf
