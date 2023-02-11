@@ -15,11 +15,13 @@ public:
     // new elements that dont fit get discarded
     bool insert(T element) override {
         auto lock = _clauses_mutex.getLock();
+        bool enough_space = true;
         if (_elements.size() >= _max_clause_count) {
             _elements.pop_back();
-        };
+            enough_space = false;
+        }
         _elements.push_front(element);
-        return true;
+        return enough_space;
     }
 
     T extract() override {
