@@ -16,16 +16,18 @@ public:
     // new elements that dont fit get discarded
     bool insert(T element) override {
         auto lock = _clauses_mutex.getLock();
+        bool enough_space = true;
         if (_elements.size() >= _max_clause_count) {
+            enough_space = false;
             auto last_element_iterator = std::prev(_elements.end());
             if (element < *last_element_iterator) {
                 _elements.erase(last_element_iterator);
             } else {
-                return false;
+                return enough_space;
             }
         };
         _elements.insert(element);
-        return true;
+        return enough_space;
     }
 
     T extract() override {
