@@ -16,6 +16,7 @@
 #include "util/ordered_buffers/lifo_ring_buffer.hpp"
 #include "util/ordered_buffers/min_ring_buffer.hpp"
 #include "util/ordered_buffers/max_ring_buffer.hpp"
+#include "util/ordered_buffers/min_lbd_buffer.hpp"
 
 class SatEngine;
 
@@ -23,8 +24,8 @@ class ExternalClauseChecker {
 
 private:
     //std::list<OwnedClause> _clauses_to_check;
-    const int _max_clause_count = 2000;
-    LIFORingBuffer<OwnedClause> _clauses_to_check_implementation = LIFORingBuffer<OwnedClause>(_max_clause_count);
+    const int _max_clause_count = 5000;
+    MinLBDBuffer _clauses_to_check_implementation = MinLBDBuffer(_max_clause_count);
     SynchronizedOrderedBuffer<OwnedClause> &_clauses_to_check = _clauses_to_check_implementation;
     std::set<OwnedClause> _admitted_clauses;
 

@@ -198,7 +198,7 @@ public:
                     LOG(V5_DEBG, "[CPCS] SAT PROCESS SOLVING of external clauses\n");
                     _engine.checkExternalClausesForImport(_external_clauses_buffer, _hsm->externalClausesBufferSize);
                 } else {
-                    LOG(V5_DEBG, "[CPCS] Digest Clauses without checking them.\n");
+                    LOG(V4_VVER, "[CPCS] Digest %i Clauses without checking them.\n", _hsm->externalClausesBufferSize);
                     _engine.digestSharingWithoutFilter(_external_clauses_buffer, _hsm->externalClausesBufferSize);
                 }
                 _hsm->didImportExternalClauses = true;

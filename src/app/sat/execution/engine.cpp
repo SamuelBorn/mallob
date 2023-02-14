@@ -414,5 +414,6 @@ void SatEngine::incorporateAdmittedExternalClauses() {
     }
     auto clauses = _external_clause_checker->fetchAdmittedClauses();
     if (clauses.empty()) return;
+    LOG(V4_VVER, "[CPCS] Last log before digest external\n");
     digestSharingWithoutFilter(clauses.data(), clauses.size());
 }

@@ -385,10 +385,7 @@ void ExternalClauseChecker::submitClausesForTesting(int *externalClausesBuffer, 
 
 std::vector<int> ExternalClauseChecker::fetchAdmittedClauses() {
     auto lock = _admitted_clauses_mutex.getLock();
-    LOG(V4_VVER, "[CPCS] Buffer Full: %i\n", (int) buffer_full);
-    LOG(V4_VVER, "[CPCS] Admitted: %i\n", (int) admitted);
-    LOG(V4_VVER, "[CPCS] Rejected: %i\n", (int) rejected);
-    LOG(V4_VVER, "[CPCS] Timeout: %i\n", (int) timeouted);
+    LOG(V4_VVER, "[CPCS] full: %i,  admitted: %i,  rejected: %i,  timeout: %i, fill-level: %i\n", (int) buffer_full, (int) admitted, (int) rejected, (int) timeouted, _clauses_to_check.size());
     LOG(V4_VVER, "[CPCS] FETCH admitted clauses: %i\n", _admitted_clauses.size());
 
     std::vector<int> buffer;
