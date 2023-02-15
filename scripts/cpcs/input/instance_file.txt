@@ -1,2 +1,4 @@
-instances/unsat1000.cnf
-instances/unsat1000.cnf
+instances/r3unsat_300.cnf
+instances/r3unsat_300.cnf
+instances/r3unsat_300.cnf
+instances/r3unsat_300.cnf

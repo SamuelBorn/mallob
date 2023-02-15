@@ -33,7 +33,7 @@ def run_once(timeout_seconds, instance_file, num_jobs, num_cores, identifier_gro
                                      f'-client-template=templates/client-template.json', shell=True)
 
     filtered = [float(line.split(" ")[4]) for line in output.decode("utf-8").split("\n") if "RESPONSE_TIME" in line]
-    return sum(filtered) if len(filtered) >= num_jobs else 2 * timeout_seconds
+    return sum(filtered) / len(filtered) if len(filtered) >= num_jobs else 2 * timeout_seconds
 
 
 def run_multiple(timeout_seconds, instance_file, num_jobs, num_cores, identifier_group_nogroup, n):

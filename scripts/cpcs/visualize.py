@@ -19,9 +19,9 @@ def main():
             data = json.load(f)
 
         if file_idx == 0:
-            plt.boxplot(data.values(), labels=[round(float(key), 3) for key in data.keys()], medianprops=dict(linewidth=3, color='green'), boxprops=dict(color='blue'))
+            plt.boxplot(data.values(), labels=[key for key in data.keys()], medianprops=dict(linewidth=3, color='green'), boxprops=dict(color='blue'))
         else:
-            plt.boxplot(data.values(), labels=[round(float(key), 3) for key in data.keys()], medianprops=dict(linewidth=3, color='orange'), boxprops=dict(color='red'))
+            plt.boxplot(data.values(), labels=[key for key in data.keys()], medianprops=dict(linewidth=3, color='orange'), boxprops=dict(color='red'))
     plt.show()
 
 

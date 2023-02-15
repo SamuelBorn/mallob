@@ -17,7 +17,7 @@ std::atomic_int ForkedSatJob::_static_subprocess_index = 1;
 ForkedSatJob::ForkedSatJob(const Parameters& params, const JobSetup& setup) : 
         BaseSatJob(params, setup) {
     getInterJobCommunicator().setRingAction([&](RingMessage &msg) {
-        LOG(V5_DEBG, "[CPCS] ForkedSatJob sending clauses\n");
+        LOG(V5_DEBG, "[CPCS] ForkedSatJob recv clauses\n");
         _solver->setCheckExternalClauses(this->getDescription().shouldCheckShared());
         std::vector<int> clauses(msg.payload.size() / sizeof(int));
         memcpy(clauses.data(), msg.payload.data(), msg.payload.size());
