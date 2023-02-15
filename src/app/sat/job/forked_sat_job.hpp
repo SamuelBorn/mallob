@@ -78,7 +78,7 @@ public:
     virtual void digestSharingWithoutFilter(std::vector<int>& clauses) override;
     void returnClauses(std::vector<int>& clauses) override;
 
-    void includeExternalProblemClauses(std::vector<int> &clauses);
+    void executeRingAction(RingMessage &msg) override;
 
 private:
     void doStartSolver();

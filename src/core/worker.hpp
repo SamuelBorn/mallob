@@ -63,6 +63,7 @@ private:
     AsyncCollective<GroupSharingMap> _group_sharing_collective;
     int _reduction_call_counter = 1;
 
+    InterJobCommunicator _inter_job_communicator;
     MessageSubscription _join_ring_request_subscription = {MSG_JOIN_RING_REQUEST, [&](auto &h) { handleJoinRingRequest(h); }};
     MessageSubscription _join_ring_request_accept_subscription = {MSG_JOIN_RING_REQUEST_ACCEPT, [&](auto &h) { handleJoinRingRequestAccept(h); }};
     MessageSubscription _pass_ring_message_subscription = {MSG_RING_MESSAGE, [&](auto &h) { forwardRingMessage(h); }};

@@ -14,16 +14,8 @@
 
 std::atomic_int ForkedSatJob::_static_subprocess_index = 1;
 
-ForkedSatJob::ForkedSatJob(const Parameters& params, const JobSetup& setup) : 
-        BaseSatJob(params, setup) {
-    getInterJobCommunicator().setRingAction([&](RingMessage &msg) {
-        LOG(V5_DEBG, "[CPCS] ForkedSatJob recv clauses\n");
-        _solver->setCheckExternalClauses(this->getDescription().shouldCheckShared());
-        std::vector<int> clauses(msg.payload.size() / sizeof(int));
-        memcpy(clauses.data(), msg.payload.data(), msg.payload.size());
-        includeExternalProblemClauses(clauses);
-    });
-}
+ForkedSatJob::ForkedSatJob(const Parameters& params, const JobSetup& setup) :
+        BaseSatJob(params, setup) {}
 
 void ForkedSatJob::appl_start() {
     assert(!_initialized);
@@ -43,12 +35,12 @@ void ForkedSatJob::doStartSolver() {
 
     const JobDescription& desc = getDescription();
     // do not copy the entire job description if the spawned job is an empty dummy
-    bool dummyJob = config.threads == 0; 
+    bool dummyJob = config.threads == 0;
 
     _solver.reset(new SatProcessAdapter(
         std::move(hParams), std::move(config), this,
-        dummyJob ? std::min(1ul, desc.getFormulaPayloadSize(0)) : desc.getFormulaPayloadSize(0), 
-        desc.getFormulaPayload(0), 
+        dummyJob ? std::min(1ul, desc.getFormulaPayloadSize(0)) : desc.getFormulaPayloadSize(0),
+        desc.getFormulaPayload(0),
         dummyJob ? std::min(1ul, desc.getAssumptionsSize(0)) : desc.getAssumptionsSize(0),
         desc.getAssumptionsPayload(0),
         (AnytimeSatClauseCommunicator*)_clause_comm
@@ -73,12 +65,12 @@ void ForkedSatJob::loadIncrements() {
         _last_imported_revision++;
         size_t numLits = desc.getFormulaPayloadSize(_last_imported_revision);
         size_t numAssumptions = desc.getAssumptionsSize(_last_imported_revision);
-        LOG(V4_VVER, "%s : Forward rev. %i : %i lits, %i assumptions\n", toStr(), 
+        LOG(V4_VVER, "%s : Forward rev. %i : %i lits, %i assumptions\n", toStr(),
                 _last_imported_revision, numLits, numAssumptions);
         revisions.emplace_back(SatProcessAdapter::RevisionData {
             _last_imported_revision,
             _last_imported_revision == lastRev ? desc.getChecksum() : Checksum(),
-            numLits, 
+            numLits,
             desc.getFormulaPayload(_last_imported_revision),
             numAssumptions,
             desc.getAssumptionsPayload(_last_imported_revision)
@@ -130,7 +122,7 @@ int ForkedSatJob::appl_solved() {
     if (status == SatProcessAdapter::FOUND_RESULT) {
         _internal_result = std::move(_solver->getSolution());
         result = _internal_result.result;
-        LOG_ADD_DEST(V2_INFO, "%s rev. %i : found result %s", getJobTree().getRootNodeRank(), toStr(), getRevision(), 
+        LOG_ADD_DEST(V2_INFO, "%s rev. %i : found result %s", getJobTree().getRootNodeRank(), toStr(), getRevision(),
                             result == RESULT_SAT ? "SAT" : result == RESULT_UNSAT ? "UNSAT" : "UNKNOWN");
         _internal_result.id = getId();
         _internal_result.revision = getRevision();
@@ -184,7 +176,7 @@ bool ForkedSatJob::appl_isDestructible() {
 void ForkedSatJob::appl_memoryPanic() {
     if (!_initialized) return;
     int nbThreads = getNumThreads();
-    if (nbThreads > 0 && _solver->getStartedNumThreads() == nbThreads) 
+    if (nbThreads > 0 && _solver->getStartedNumThreads() == nbThreads)
         setNumThreads(nbThreads-1);
     LOG(V1_WARN, "[WARN] %s : memory panic triggered - restarting solver with %i threads\n", toStr(), getNumThreads());
     _solver->crash();
@@ -192,7 +184,7 @@ void ForkedSatJob::appl_memoryPanic() {
 
 bool ForkedSatJob::checkClauseComm() {
     if (!_initialized) return false;
-    if (_clause_comm == nullptr && _solver->hasClauseComm()) 
+    if (_clause_comm == nullptr && _solver->hasClauseComm())
         _clause_comm = (void*)_solver->getClauseComm();
     return _clause_comm != nullptr;
 }
@@ -226,7 +218,7 @@ bool ForkedSatJob::hasPreparedSharing() {
     return _solver->hasCollectedClauses();
 }
 std::vector<int> ForkedSatJob::getPreparedClauses(Checksum& checksum) {
-    if (!_initialized || !_solver->hasCollectedClauses()) 
+    if (!_initialized || !_solver->hasCollectedClauses())
         return std::vector<int>();
     return _solver->getCollectedClauses();
 }
@@ -255,7 +247,7 @@ void ForkedSatJob::applyFilter(std::vector<int>& filter) {
 
     if (isRingMember()) {
         applyFilterToLocalClauses(filter);
-        getInterJobCommunicator().emitMessageIntoRing(_stored_clauses);
+        getInterJobCommunicator()->emitMessageIntoRing(_stored_clauses);
     }
 
     _solver->applyFilter(filter);
@@ -306,11 +298,13 @@ void ForkedSatJob::startDestructThreadIfNecessary() {
     }
 }
 
-void ForkedSatJob::includeExternalProblemClauses(std::vector<int> &clauses) {
-    assert(_initialized);
-    if (!_initialized) return;
+void ForkedSatJob::executeRingAction(RingMessage &msg) {
+    _solver->setCheckExternalClauses(this->getDescription().shouldCheckShared());
+    std::vector<int> clauses(msg.payload.size() / sizeof(int));
+    memcpy(clauses.data(), msg.payload.data(), msg.payload.size());
     _solver->includeExternalProblemClauses(clauses);
 }
+
 
 ForkedSatJob::~ForkedSatJob() {
     LOG(V5_DEBG, "%s : enter FSJ destructor\n", toStr());

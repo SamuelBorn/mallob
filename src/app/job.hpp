@@ -185,7 +185,7 @@ private:
     std::optional<JobRequest> _request_to_multiply_left;
     std::optional<JobRequest> _request_to_multiply_right;
 
-    InterJobCommunicator _inter_job_communicator;
+    InterJobCommunicator *_inter_job_communicator = nullptr;
 
 // Public methods.
 public:
@@ -234,9 +234,11 @@ public:
 
 
     // Getter methods and simple queries
+    InterJobCommunicator *getInterJobCommunicator() {assert(_inter_job_communicator); return _inter_job_communicator;}
+    void setInterJobCommunicator(InterJobCommunicator *ijc) {_inter_job_communicator = ijc;}
+    bool isRingMember() {return _inter_job_communicator && _inter_job_communicator->isRingMember();}
+    virtual void executeRingAction(RingMessage &msg) {LOG(V3_VERB, "Executing NOP RingAction\n"); }
 
-    bool isRingMember() { return _inter_job_communicator.isRingMember(); }
-    InterJobCommunicator &getInterJobCommunicator() { return _inter_job_communicator; }
     JobState getState() const {return _state;};
     void assertState(JobState state) const {assert(_state == state || LOG_RETURN_FALSE("State of %s : %s\n", toStr(), jobStateToStr()));};
     int getVolume() const {return _volume;}

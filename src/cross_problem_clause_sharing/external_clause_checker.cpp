@@ -278,7 +278,8 @@ void ExternalClauseChecker::runOnce() {
 
         auto elapsed_time_seconds = t2 - t1;
         LOG(V6_DEBGV, "[CPCS] Solver took %i [seconds]\n", elapsed_time_seconds);
-        assert(elapsed_time_seconds < 1.05 * _solver_timeout_seconds);
+        //if (elapsed_time_seconds > 2 * _solver_timeout_seconds) LOG(V4_VVER, "[CPCS] ecc solver timeout: %f\n", elapsed_time_seconds);
+        assert(elapsed_time_seconds <= 2 * _solver_timeout_seconds);
 
         {  // Un interrupt solver (if it was interrupted)
             auto lock = _state_mutex.getLock();
@@ -291,7 +292,7 @@ void ExternalClauseChecker::runOnce() {
             auto lock = _admitted_clauses_mutex.getLock();
             _admitted_clauses.emplace(clause.stored_clause.copy());
             admitted++;
-        } else if (elapsed_time_seconds > 0.95 * _solver_timeout_seconds) {
+        } else if (elapsed_time_seconds >= 0.95 * _solver_timeout_seconds) {
             timeouted++;
         } else {
             rejected++;

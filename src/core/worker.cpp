@@ -21,19 +21,25 @@
 #include "comm/async_collective_tags.hpp"
 
 Worker::Worker(MPI_Comm comm, Parameters& params) :
-    _comm(comm), _world_rank(MyMpi::rank(MPI_COMM_WORLD)), 
-    _params(params), _job_registry(_params, _comm), _routing_tree(_params, _comm), 
-    _sys_state(_comm, params.sysstatePeriod(), SysState<9>::ALLREDUCE), 
+    _comm(comm), _world_rank(MyMpi::rank(MPI_COMM_WORLD)),
+    _params(params), _job_registry(_params, _comm), _routing_tree(_params, _comm),
+    _sys_state(_comm, params.sysstatePeriod(), SysState<9>::ALLREDUCE),
     _sched_man(_params, _comm, _routing_tree, _job_registry, _sys_state),
     _group_sharing_collective(_comm, MyMpi::getMessageQueue(), ASYNC_COLLECTIVE_GROUP_ID_SHARING),
     _watchdog(/*enabled=*/_params.watchdog(), /*checkIntervMillis=*/100, Timer::elapsedSeconds())
 {
     _watchdog.setWarningPeriod(50); // warn after 50ms without a reset
     _watchdog.setAbortPeriod(_params.watchdogAbortMillis()); // abort after X ms without a reset
+
+    _inter_job_communicator.setRingAction([&](RingMessage &msg) {
+        Job &job = _job_registry.getActive();
+        if(!(_job_registry.hasActiveJob() && job.getJobTree().isRoot() && job.getDescription().getGroupId() != -1)) return;
+        job.executeRingAction(msg);
+    });
 }
 
 void Worker::init() {
-    
+
     // Write tag of currently handled message into watchdog
     MyMpi::getMessageQueue().setCurrentTagPointers(_watchdog.activityRecvTag(), _watchdog.activitySendTag());
 
@@ -49,7 +55,7 @@ void Worker::advance() {
 
     // Reset watchdog
     _watchdog.reset(time);
-    
+
     // Check & print stats
     if (_periodic_stats_check.ready(time)) {
         _watchdog.setActivity(Watchdog::STATS);
@@ -64,7 +70,7 @@ void Worker::advance() {
 
     // Do diverse periodic maintenance tasks
     if (_periodic_maintenance.ready(time)) {
-        
+
         // Forget jobs that are old or wasting memory
         _watchdog.setActivity(Watchdog::FORGET_OLD_JOBS);
         _sched_man.forgetOldJobs();
@@ -98,7 +104,7 @@ void Worker::checkStats() {
 
     // For this process and subprocesses
     if (_node_stats_calculated.load(std::memory_order_acquire)) {
-        
+
         // Update local sysstate, log update
         _sys_state.setLocal(SYSSTATE_GLOBALMEM, _node_memory_gbs);
         LOG(V4_VVER, "mem=%.2fGB mt_cpu=%.3f mt_sys=%.3f\n", _node_memory_gbs, _mainthread_cpu_share, _mainthread_sys_share);
@@ -147,7 +153,7 @@ void Worker::checkStats() {
         }
     }
 
-    if (_params.memoryPanic() && _host_comm && 
+    if (_params.memoryPanic() && _host_comm &&
             _host_comm->advanceAndCheckMemoryPanic(Timer::elapsedSecondsCached())) {
         _sched_man.triggerMemoryPanic();
     }
@@ -175,7 +181,7 @@ void Worker::checkJobs() {
 }
 
 void Worker::checkActiveJob() {
-    
+
     // PE runs an active job
     Job &job = _job_registry.getActive();
     int id = job.getId();
@@ -197,12 +203,12 @@ void Worker::publishAndResetSysState() {
         float ratioFulfilled = numDesires <= 0 ? 0 : (float)numFulfilledDesires / numDesires;
         float latency = numFulfilledDesires <= 0 ? 0 : result[SYSSTATE_SUMDESIRELATENCIES] / numFulfilledDesires;
 
-        LOG(V2_INFO, "sysstate busyratio=%.3f cmtdratio=%.3f jobs=%i globmem=%.2fGB newreqs=%i hops=%i\n", 
-                    result[SYSSTATE_BUSYRATIO]/MyMpi::size(_comm), result[SYSSTATE_COMMITTEDRATIO]/MyMpi::size(_comm), 
-                    (int)result[SYSSTATE_NUMJOBS], result[SYSSTATE_GLOBALMEM], (int)result[SYSSTATE_SPAWNEDREQUESTS], 
+        LOG(V2_INFO, "sysstate busyratio=%.3f cmtdratio=%.3f jobs=%i globmem=%.2fGB newreqs=%i hops=%i\n",
+                    result[SYSSTATE_BUSYRATIO]/MyMpi::size(_comm), result[SYSSTATE_COMMITTEDRATIO]/MyMpi::size(_comm),
+                    (int)result[SYSSTATE_NUMJOBS], result[SYSSTATE_GLOBALMEM], (int)result[SYSSTATE_SPAWNEDREQUESTS],
                     (int)result[SYSSTATE_NUMHOPS]);
     }
-    
+
     if (!_job_registry.isBusyOrCommitted()) {
         LOG(V4_VVER, "I am idle\n");
     }
@@ -233,10 +239,11 @@ void Worker::allGatherGroupIds() {
         bool valid_job = _job_registry.hasActiveJob() && job.getJobTree().isRoot() && job.getDescription().getGroupId() != -1;
         if (!valid_job) return;
 
+        job.setInterJobCommunicator(&_inter_job_communicator);
         std::map<int, std::pair<int, bool>> ring_representatives = results.front().data;
-        job.getInterJobCommunicator().setGroupId(job.getDescription().getGroupId());
-        job.getInterJobCommunicator().gatherIntoRing(ring_representatives, _reduction_call_counter);
-        job.getInterJobCommunicator().handleOpenJoinRingRequests();
+        _inter_job_communicator.setGroupId(job.getDescription().getGroupId());
+        _inter_job_communicator.gatherIntoRing(ring_representatives, _reduction_call_counter);
+        _inter_job_communicator.handleOpenJoinRingRequests();
         LOG(V5_DEBG, "[CPCS] Group: %i, %i->%i \n", job.getDescription().getGroupId(), MyMpi::rank(MPI_COMM_WORLD), job.getInterJobCommunicator().getNextRingMemberRank());
     });
 }
@@ -244,19 +251,20 @@ void Worker::allGatherGroupIds() {
 void Worker::handleJoinRingRequest(MessageHandle &h) {
     Job &job = _job_registry.getActive();
     bool valid_job = _job_registry.hasActiveJob() && job.getJobTree().isRoot() && job.getDescription().getGroupId() != -1;
-    if (valid_job) job.getInterJobCommunicator().handleJoinRingRequest(h);
+    if (valid_job) _inter_job_communicator.handleJoinRingRequest(h);
 }
 
 void Worker::handleJoinRingRequestAccept(MessageHandle &h) {
     Job &job = _job_registry.getActive();
     bool valid_job = _job_registry.hasActiveJob() && job.getJobTree().isRoot() && job.getDescription().getGroupId() != -1;
-    if (valid_job) job.getInterJobCommunicator().handleJoinRingRequestAccept(h);
+    if (valid_job) _inter_job_communicator.handleJoinRingRequestAccept(h);
 }
 
 void Worker::forwardRingMessage(MessageHandle &h) {
+    LOG(V5_DEBG, "[CPCS] worker received forward ring message\n");
     Job &job = _job_registry.getActive();
     bool valid_job = _job_registry.hasActiveJob() && job.getJobTree().isRoot() && job.getDescription().getGroupId() != -1;
-    if (valid_job) job.getInterJobCommunicator().forwardRingMessage(h);
+    if (valid_job) _inter_job_communicator.forwardRingMessage(h);
 }
 
 

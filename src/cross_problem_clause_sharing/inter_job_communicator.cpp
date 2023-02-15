@@ -85,6 +85,7 @@ void InterJobCommunicator::emitMessageIntoRing(std::vector<uint8_t> &payload) {
     assert(isRingMember());
     if (_next_ring_member_rank == _rank) return;
     auto r = RingMessage(_group_id, _rank, payload);
+    LOG(V5_DEBG, "[CPCS] IJC emit into ring, sending to %i\n", _next_ring_member_rank);
     MyMpi::isend(_next_ring_member_rank, MSG_RING_MESSAGE, r);
 }
 
@@ -101,9 +102,13 @@ void InterJobCommunicator::forwardRingMessage(MessageHandle &h) {
     if (not isRingMember()) return;
     if (_next_ring_member_rank == _rank) return;
     auto ring_message = Serializable::get<RingMessage>(h.getRecvData());
-    if (ring_message.group_id != _group_id) return;
+    if (ring_message.group_id != _group_id) {
+        LOG(V4_VVER, "[CPCS] WARNING THIS MESSAGE WAS SENT TO THE WRONG GROUP ID → this can happen when a job finishes and a new job with a different group_id joins\n");
+        return;
+    }
     if (_ring_action) _ring_action(ring_message);
     if (ring_message.msg_start_rank == _next_ring_member_rank) return;
+    LOG(V5_DEBG, "[CPCS] IJC forward to %i, start=%i\n", _next_ring_member_rank, ring_message.msg_start_rank);
     MyMpi::isend(_next_ring_member_rank, MSG_RING_MESSAGE, ring_message);
 }
 
