@@ -1,5 +1,7 @@
 
 #include <sys/resource.h>
+#include <chrono>
+
 #include "util/assert.hpp"
 
 #include "app/sat/execution/solver_thread.hpp"
@@ -270,7 +272,14 @@ void ExternalClauseChecker::runOnce() {
             aLits = tldAssumptions.data();
         }
 
+        auto t1 = Timer::elapsedSeconds();
         SatResult res = _solver.solve(aSize, aLits);
+        auto t2 = Timer::elapsedSeconds();
+
+        auto elapsed_time_seconds = t2 - t1;
+        LOG(V6_DEBGV, "[CPCS] Solver took %i [seconds]\n", elapsed_time_seconds);
+        assert(elapsed_time_seconds < 1.05 * _solver_timeout_seconds);
+
         {  // Un interrupt solver (if it was interrupted)
             auto lock = _state_mutex.getLock();
             _solver.uninterrupt();
@@ -282,10 +291,10 @@ void ExternalClauseChecker::runOnce() {
             auto lock = _admitted_clauses_mutex.getLock();
             _admitted_clauses.emplace(clause.stored_clause.copy());
             admitted++;
-        } else if (res == SAT) {
-            rejected++;
-        } else {
+        } else if (elapsed_time_seconds > 0.95 * _solver_timeout_seconds) {
             timeouted++;
+        } else {
+            rejected++;
         }
     }
     //if (s != "")LOG(V4_VVER, "[CPCS] %s\n", s.c_str());
@@ -353,7 +362,7 @@ void ExternalClauseChecker::reportResult(int res, int revision) {
 Cadical *ExternalClauseChecker::createLocalSolverInterface(const SolverSetup &solverSetup) {
     auto cadical = new Cadical(solverSetup);
     cadical->setAllowedConflicts(0);
-    cadical->enableTimeout(0.2f);
+    cadical->enableTimeout(_solver_timeout_seconds);
     return cadical;
 }
 
@@ -375,7 +384,7 @@ void ExternalClauseChecker::submitClausesForTesting(int *externalClausesBuffer, 
             if (!_clauses_to_check.insert(OwnedClause(c.copy()))) buffer_full++;
             //_num_clauses_to_check++;
         } else {
-            LOG(V5_DEBG, "[CPCS] Clause discarded -> already existed in bloom filter\n");
+            LOG(V6_DEBGV, "[CPCS] Clause discarded -> already existed in bloom filter\n");
         }
 
         c = reader.getNextIncomingClause();

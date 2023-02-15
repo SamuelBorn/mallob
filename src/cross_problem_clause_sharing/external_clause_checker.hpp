@@ -23,7 +23,8 @@ class SatEngine;
 class ExternalClauseChecker {
 
 private:
-    //std::list<OwnedClause> _clauses_to_check;
+    const float _solver_timeout_seconds = 0.1f;
+
     const int _max_clause_count = 5000;
     MinLBDBuffer _clauses_to_check_implementation = MinLBDBuffer(_max_clause_count);
     SynchronizedOrderedBuffer<OwnedClause> &_clauses_to_check = _clauses_to_check_implementation;
