@@ -1,6 +1,13 @@
 
 #include <sys/resource.h>
 #include <chrono>
+#include <iostream>
+#include <string>
+#include <thread>
+#include <mutex>
+#include <condition_variable>
+#include <chrono>
+#include <list>
 
 #include "util/assert.hpp"
 
@@ -242,6 +249,12 @@ void ExternalClauseChecker::diversifyAfterReading() {
 }
 
 void ExternalClauseChecker::runOnce() {
+    // Wait until main() sends data
+    std::unique_lock lk(m);
+    cv.wait(lk, [this]{return _ready_for_external_checking;});
+    lk.unlock();
+    cv.notify_one();
+
     //std::string s;
     while (!_clauses_to_check.empty()) {
         auto clause = OwnedClause(_clauses_to_check.extract());
@@ -299,6 +312,12 @@ void ExternalClauseChecker::runOnce() {
         }
     }
     //if (s != "")LOG(V4_VVER, "[CPCS] %s\n", s.c_str());
+
+    {
+        std::lock_guard lk(m);
+        _ready_for_external_checking = false;
+    }
+    LOG(V4_VVER, "[CPCS] ECC finished all Clauses → waiting for next\n");
 }
 
 void ExternalClauseChecker::waitWhileSolved() {
@@ -390,6 +409,12 @@ void ExternalClauseChecker::submitClausesForTesting(int *externalClausesBuffer, 
 
         c = reader.getNextIncomingClause();
     }
+    {
+        std::lock_guard lk(m);
+        _ready_for_external_checking = true;
+    }
+    cv.notify_one();
+
     LOG(V5_DEBG, "[CPCS] RECV clauses. To check: %i\n", (int) _clauses_to_check.size());
 }
 

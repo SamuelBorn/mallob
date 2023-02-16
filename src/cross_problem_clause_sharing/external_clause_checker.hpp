@@ -77,6 +77,10 @@ private:
     bool _found_result = false;
     JobResult _result;
 
+    std::mutex m;
+    std::condition_variable cv;
+    bool _ready_for_external_checking = false;
+
 public:
     ExternalClauseChecker(const Parameters& params, const SatProcessConfig& config,  const SolverSetup &solverSetup,
                  size_t fSize, const int* fLits, size_t aSize, const int* aLits, int localId);
