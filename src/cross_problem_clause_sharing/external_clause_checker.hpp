@@ -6,6 +6,7 @@
 #include <thread>
 #include <atomic>
 #include <list>
+#include <map>
 
 #include "app/sat/solvers/cadical.hpp"
 #include "app/sat/execution/solver_thread.hpp"
@@ -41,6 +42,8 @@ private:
     //std::atomic_int _num_clauses_to_check = 0;
 
     ClauseFilter _clause_bloom_filter;
+
+    std::vector<int> literal_ranks;
 
     const Parameters& _params;
     std::unique_ptr<Cadical> _solver_ptr;

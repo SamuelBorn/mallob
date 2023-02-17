@@ -17,6 +17,22 @@
 #include "util/hashing.hpp"
 #include "external_clause_checker.hpp"
 #include "app/sat/solvers/cadical_timeout_terminator.hpp"
+#include "jersolow_wang.hpp"
+
+
+template<typename T>
+std::string array_to_str(const T *arr, size_t size) {
+    std::string ret;
+    for (int i = 0; i < size; ++i) {
+        ret += std::to_string(arr[i]) + " ";
+    }
+    return ret;
+}
+
+template<typename T>
+std::string vec_to_str(std::vector<T> &vec) {
+    return array_to_str(vec.data(), vec.size());
+}
 
 using namespace SolvingStates;
 
@@ -26,7 +42,8 @@ ExternalClauseChecker::ExternalClauseChecker(const Parameters &params, const Sat
                                              size_t fSize, const int *fLits, size_t aSize, const int *aLits, int localId) :
         _params(params), _solver_ptr(createLocalSolverInterface(solverSetup)), _solver(*_solver_ptr),
         _logger(_solver.getLogger()), _local_id(localId), _clause_bloom_filter(params.strictClauseLengthLimit()),
-        _has_pseudoincremental_solvers(_solver.getSolverSetup().hasPseudoincrementalSolvers) {
+        _has_pseudoincremental_solvers(_solver.getSolverSetup().hasPseudoincrementalSolvers),
+        literal_ranks(get_lit_rankings(fSize, fLits)) {
 
     _portfolio_rank = config.apprank;
     _portfolio_size = config.mpisize;
@@ -251,70 +268,67 @@ void ExternalClauseChecker::diversifyAfterReading() {
 void ExternalClauseChecker::runOnce() {
     // Wait until main() sends data
     std::unique_lock lk(m);
-    cv.wait(lk, [this]{return _ready_for_external_checking;});
+    cv.wait(lk, [this] { return _ready_for_external_checking; });
     lk.unlock();
     cv.notify_one();
 
     //std::string s;
     while (!_clauses_to_check.empty()) {
         auto clause = OwnedClause(_clauses_to_check.extract());
-        //s.append(std::to_string(clause.stored_clause.size) + ' ');
-        //_num_clauses_to_check--;
+        LOG(V4_VVER, "[CPCS] Befor: %s\n", array_to_str(clause.stored_clause.begin, clause.stored_clause.size).c_str());
+        std::sort(clause.stored_clause.begin, clause.stored_clause.begin + clause.stored_clause.size,
+                  [&](const int lhs, const int rhs) { return literal_ranks.at(std::abs(lhs)) > literal_ranks.at(std::abs(rhs)); });
 
-        size_t aSize = clause.stored_clause.size;
-        int aLitsArray[aSize];
-        int *aLits = aLitsArray;
+        size_t total_num_assumptions = clause.stored_clause.size;
+        LOG(V4_VVER, "[CPCS] Checking: %s\n", array_to_str(clause.stored_clause.begin, clause.stored_clause.size).c_str());
+        for (int i = 0; i < total_num_assumptions; ++i)
+            if (clause.stored_clause.begin[i] > _max_var) continue;
 
-        {
-            auto lock = _state_mutex.getLock();
-            if (_suspended) return;
-            _solver.resume();
-
-            for (int i = 0; i < aSize; ++i) {
-                if (clause.stored_clause.begin[i] > _max_var) return;
-                aLits[i] = -1 * clause.stored_clause.begin[i];
+        auto assumptions = std::vector<int>();
+        assumptions.reserve(total_num_assumptions);
+        for (int i = 0; i < clause.stored_clause.size; ++i) {
+            {
+                auto lock = _state_mutex.getLock();
+                if (_suspended) return;
+                _solver.resume();
             }
-        }
 
-        // If necessary, translate assumption literals
-        std::vector<int> tldAssumptions;
-        if (!_vt.getExtraVariables().empty()) {
-            for (size_t i = 0; i < aSize; i++) {
-                tldAssumptions.push_back(_vt.getTldLit(aLits[i]));
+            assumptions.push_back(-1 * clause.stored_clause.begin[i]);
+
+            // If necessary, translate assumption literals
+            std::vector<int> tldAssumptions;
+            if (!_vt.getExtraVariables().empty()) {
+                for (size_t j = 0; j < total_num_assumptions; j++) tldAssumptions.push_back(_vt.getTldLit(assumptions.at(j)));
+                assumptions = tldAssumptions;
             }
-            aLits = tldAssumptions.data();
-        }
 
-        auto t1 = Timer::elapsedSeconds();
-        SatResult res = _solver.solve(aSize, aLits);
-        auto t2 = Timer::elapsedSeconds();
+            LOG(V4_VVER, "[CPCS] Subchecking %s\n", vec_to_str<int>(assumptions).c_str());
+            auto t1 = Timer::elapsedSeconds();
+            SatResult res = _solver.solve(assumptions.size(), assumptions.data());
+            auto t2 = Timer::elapsedSeconds();
 
-        auto elapsed_time_seconds = t2 - t1;
-        LOG(V6_DEBGV, "[CPCS] Solver took %i [seconds]\n", elapsed_time_seconds);
-        //if (elapsed_time_seconds > 2 * _solver_timeout_seconds) LOG(V4_VVER, "[CPCS] ecc solver timeout: %f\n", elapsed_time_seconds);
-        assert(elapsed_time_seconds <= 2 * _solver_timeout_seconds);
+            auto elapsed_time_seconds = t2 - t1;
+            assert(elapsed_time_seconds <= 2 * _solver_timeout_seconds);
 
-        {  // Un interrupt solver (if it was interrupted)
-            auto lock = _state_mutex.getLock();
-            _solver.uninterrupt();
-            _interrupted = false;
-        }
+            {  // Un interrupt solver (if it was interrupted)
+                auto lock = _state_mutex.getLock();
+                _solver.uninterrupt();
+                _interrupted = false;
+            }
 
-        // External clause is applicable -> save to admitted clauses to be fetched later
-        if (res == UNSAT) {
-            auto lock = _admitted_clauses_mutex.getLock();
-            _admitted_clauses.emplace(clause.stored_clause.copy());
-            admitted++;
-        } else if (elapsed_time_seconds >= 0.95 * _solver_timeout_seconds) {
-            timeouted++;
-        } else {
-            rejected++;
+            if (res == UNSAT) {
+                auto lock = _admitted_clauses_mutex.getLock();
+                _admitted_clauses.emplace(clause.stored_clause.copy());
+                admitted++;
+                if (total_num_assumptions > assumptions.size())
+                    LOG(V4_VVER, "[CPCS] ------------ VALITADED NEW CLAUSE!! %s\n", vec_to_str<int>(assumptions).c_str());
+                break;
+            }
         }
     }
-    //if (s != "")LOG(V4_VVER, "[CPCS] %s\n", s.c_str());
 
     {
-        std::lock_guard lk(m);
+        std::lock_guard lk2(m);
         _ready_for_external_checking = false;
     }
     LOG(V4_VVER, "[CPCS] ECC finished all Clauses → waiting for next\n");
