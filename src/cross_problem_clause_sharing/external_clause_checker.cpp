@@ -395,6 +395,28 @@ const char *ExternalClauseChecker::toStr() {
     return _name.c_str();
 }
 
+std::vector<int> ExternalClauseChecker::throw_away_max_literal_clauses(int *externalClausesBuffer, int externalClausesBufferSize) {
+    auto reader = BufferReader(externalClausesBuffer, externalClausesBufferSize, _params.strictClauseLengthLimit(), _params.groupClausesByLengthLbdSum(), false);
+    auto builder = BufferBuilder(-1, _params.strictClauseLengthLimit(), _params.groupClausesByLengthLbdSum());
+
+    Clause c = reader.getNextIncomingClause();
+    while (c.begin != nullptr) {
+        bool contains_literal_bigger_than_max_var = false;
+        for (int i = 0; i < c.size; ++i) {
+            if (c.begin[i] > _max_var){
+                // LOG(V4_VVER, "[CPCS] throw away clause %i > %i\n", c.begin[i], _max_var);
+                contains_literal_bigger_than_max_var = true;
+                break;
+            }
+        }
+        if (!contains_literal_bigger_than_max_var){
+            builder.append(c);
+        }
+        c = reader.getNextIncomingClause();
+    }
+    return builder.extractBuffer();
+}
+
 void ExternalClauseChecker::submitClausesForTesting(int *externalClausesBuffer, int externalClausesBufferSize) {
     auto reader = BufferReader(externalClausesBuffer, externalClausesBufferSize, _params.strictClauseLengthLimit(), _params.groupClausesByLengthLbdSum(), false);
     Clause c = reader.getNextIncomingClause();

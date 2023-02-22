@@ -119,16 +119,18 @@ public:
     }
     int getActiveRevision() const {return _active_revision;}
 
+    std::vector<int> throw_away_max_literal_clauses(int *externalClausesBuffer, int externalClausesBufferSize);
     void submitClausesForTesting(int *externalClausesBuffer, int externalClausesBufferSize);
     std::vector<int> fetchAdmittedClauses();
     bool hasAdmittedClauses();
+    bool readFormula();
 
 private:
     void init();
     void* run();
 
     void pin();
-    bool readFormula();
+
 
     void diversifyInitially();
     void diversifyAfterReading();
@@ -144,4 +146,5 @@ private:
     Cadical* createLocalSolverInterface(const SolverSetup &solverSetup);
 
     const char* toStr();
+
 };

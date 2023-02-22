@@ -199,7 +199,7 @@ public:
                     _engine.checkExternalClausesForImport(_external_clauses_buffer, _hsm->externalClausesBufferSize);
                 } else {
                     LOG(V4_VVER, "[CPCS] Digest %i Clauses without checking them.\n", _hsm->externalClausesBufferSize);
-                    _engine.digestSharingWithoutFilter(_external_clauses_buffer, _hsm->externalClausesBufferSize);
+                    _engine.incorporateExternalClausesWithoutChecking(_external_clauses_buffer, _hsm->externalClausesBufferSize);
                 }
                 _hsm->didImportExternalClauses = true;
             }

@@ -90,6 +90,8 @@ public:
 
     void checkExternalClausesForImport(int *externalClausesBuffer, int externalClausesBufferSize);
     void incorporateAdmittedExternalClauses();
+    void incorporateExternalClausesWithoutChecking(int *externalClausesBuffer, int externalClausesBufferSize);
+
 
 private:
 

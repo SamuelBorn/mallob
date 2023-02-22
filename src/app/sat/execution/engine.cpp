@@ -169,6 +169,7 @@ void SatEngine::appendRevision(int revision, size_t fSize, const int* fLits, siz
 
     if (revision == 0) {
         _external_clause_checker = std::make_unique<ExternalClauseChecker>(_params, _config, _solver_setup, fSize, fLits, aSize, aLits, 0);
+        _external_clause_checker->readFormula();
     }
 	for (size_t i = 0; i < _num_solvers; i++) {
 		if (revision == 0) {
@@ -393,6 +394,14 @@ void SatEngine::cleanUp() {
 
 SatEngine::~SatEngine() {
 	if (!_cleaned_up) cleanUp();
+}
+
+void SatEngine::incorporateExternalClausesWithoutChecking(int *externalClausesBuffer, int externalClausesBufferSize){
+    assert(_external_clause_checker);
+    auto cleared = _external_clause_checker->throw_away_max_literal_clauses(externalClausesBuffer, externalClausesBufferSize);
+    LOG(V4_VVER, "[CPCS] no check vector size after throw away: %i, before %i\n", cleared.size(), externalClausesBufferSize);
+    if (cleared.empty()) return;
+    digestSharingWithoutFilter(cleared.data(), cleared.size());
 }
 
 void SatEngine::checkExternalClausesForImport(int *externalClausesBuffer, int externalClausesBufferSize) {
