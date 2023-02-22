@@ -26,12 +26,14 @@ using namespace SolvingStates;
 ExternalClauseChecker::ExternalClauseChecker(const Parameters &params, const SatProcessConfig &config, const SolverSetup &solverSetup,
                                              size_t fSize, const int *fLits, size_t aSize, const int *aLits, int localId) :
         _params(params), _solver_ptr(createLocalSolverInterface(solverSetup)), _solver(*_solver_ptr),
-        _logger(_solver.getLogger()), _local_id(localId), _clause_bloom_filter(params.strictClauseLengthLimit()),
+        _logger(_solver.getLogger()), _local_id(localId),
         _has_pseudoincremental_solvers(_solver.getSolverSetup().hasPseudoincrementalSolvers) {
 
     _portfolio_rank = config.apprank;
     _portfolio_size = config.mpisize;
     _local_solvers_count = config.threads;
+
+    for (int i = 0; i < fSize; ++i) _max_var = std::max(_max_var, std::abs(fLits[i]));
 
     appendRevision(0, fSize, fLits, aSize, aLits);
     _result.result = UNKNOWN;
@@ -252,7 +254,7 @@ void ExternalClauseChecker::diversifyAfterReading() {
 void ExternalClauseChecker::runOnce() {
     // Wait until main() sends data
     std::unique_lock lk(m);
-    cv.wait(lk, [this]{return _ready_for_external_checking;});
+    cv.wait(lk, [this] { return _ready_for_external_checking; });
     lk.unlock();
     cv.notify_one();
 
@@ -404,13 +406,13 @@ std::vector<int> ExternalClauseChecker::throw_away_max_literal_clauses(int *exte
     while (c.begin != nullptr) {
         bool contains_literal_bigger_than_max_var = false;
         for (int i = 0; i < c.size; ++i) {
-            if (c.begin[i] > _max_var){
+            if (c.begin[i] > _max_var) {
                 // LOG(V4_VVER, "[CPCS] throw away clause %i > %i\n", c.begin[i], _max_var);
                 contains_literal_bigger_than_max_var = true;
                 break;
             }
         }
-        if (!contains_literal_bigger_than_max_var){
+        if (!contains_literal_bigger_than_max_var) {
             builder.append(c);
         }
         c = reader.getNextIncomingClause();
@@ -423,11 +425,11 @@ void ExternalClauseChecker::submitClausesForTesting(int *externalClausesBuffer, 
     Clause c = reader.getNextIncomingClause();
     while (c.begin != nullptr) {
 
-        if (_clause_bloom_filter.registerClause(c.begin, c.size)) {
+        if (_clause_filter.register_clause(c)) {
             if (!_clauses_to_check.insert(OwnedClause(c.copy()))) buffer_full++;
             //_num_clauses_to_check++;
         } else {
-            LOG(V6_DEBGV, "[CPCS] Clause discarded -> already existed in bloom filter\n");
+            LOG(V4_VVER, "[CPCS] Clause discarded -> already existed in filter\n");
         }
 
         c = reader.getNextIncomingClause();

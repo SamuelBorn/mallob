@@ -17,6 +17,7 @@
 #include "util/ordered_buffers/min_ring_buffer.hpp"
 #include "util/ordered_buffers/max_ring_buffer.hpp"
 #include "util/ordered_buffers/min_lbd_buffer.hpp"
+#include "util/morton/hierarchical_morton_clause_filter.hpp"
 
 class SatEngine;
 
@@ -40,7 +41,7 @@ private:
 
     //std::atomic_int _num_clauses_to_check = 0;
 
-    ClauseFilter _clause_bloom_filter;
+    HierarchicalMortonClauseFilter _clause_filter;
 
     const Parameters& _params;
     std::unique_ptr<Cadical> _solver_ptr;

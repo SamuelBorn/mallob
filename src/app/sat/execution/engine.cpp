@@ -169,7 +169,7 @@ void SatEngine::appendRevision(int revision, size_t fSize, const int* fLits, siz
 
     if (revision == 0) {
         _external_clause_checker = std::make_unique<ExternalClauseChecker>(_params, _config, _solver_setup, fSize, fLits, aSize, aLits, 0);
-        _external_clause_checker->readFormula();
+
     }
 	for (size_t i = 0; i < _num_solvers; i++) {
 		if (revision == 0) {

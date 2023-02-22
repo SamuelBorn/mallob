@@ -3,7 +3,7 @@
 #include "morton_filter.hpp"
 
 class HierarchicalMortonFilter {
-public:
+private:
     const size_t initial_buffer_size = 8192;
     size_t current_buffer_size = initial_buffer_size;
     size_t elements_in_current_buffer = 0;

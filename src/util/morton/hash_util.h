@@ -43,7 +43,6 @@ How To Cite:
 #include <random>
 
 #include "vector_types.h"
-#include "test_util.h"
 
 struct BitMixMurmur {
   inline hash_t operator()(keys_t key) const{

@@ -44,7 +44,7 @@ void testHierarchicalMorton() {
         if (!filter.registerItem(i)) numFalsePositives++;
     }
 
-    LOG(V2_INFO, "n=%i of=%.3f #fp=%i #layers=%i\n", numItems, overloadFactor, numFalsePositives, filter.filters.size());
+    // LOG(V2_INFO, "n=%i of=%.3f #fp=%i #layers=%i\n", numItems, overloadFactor, numFalsePositives, filter.filters.size());
 
     for (size_t i = 0; i < (int) (overloadFactor * numItems); i++) {
         assert(filter.likely_contains(i));
