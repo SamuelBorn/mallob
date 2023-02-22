@@ -17,6 +17,7 @@
 #include "util/hashing.hpp"
 #include "external_clause_checker.hpp"
 #include "app/sat/solvers/cadical_timeout_terminator.hpp"
+#include "util/morton/hierarchical_morton_filter.hpp"
 
 using namespace SolvingStates;
 
