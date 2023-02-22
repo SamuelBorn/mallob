@@ -161,3 +161,5 @@ SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${MY_DEBUG_OPTIONS}")
 #new_test(hashing)
 #new_test(async_collective)
 #new_test(random)
+
+new_test(amq)
