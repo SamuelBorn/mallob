@@ -24,7 +24,7 @@ class SatEngine;
 class ExternalClauseChecker {
 
 private:
-    const float _solver_timeout_seconds = 0.1f;
+    const float _solver_timeout_seconds = 0.05f;
 
     const int _max_clause_count = 5000;
     MinLBDBuffer _clauses_to_check_implementation = MinLBDBuffer(_max_clause_count);
@@ -35,6 +35,7 @@ private:
     std::atomic_int admitted = 0;
     std::atomic_int rejected = 0;
     std::atomic_int timeouted = 0;
+    std::atomic_int amq = 0;
 
     //Mutex _clauses_to_check_mutex;
     Mutex _admitted_clauses_mutex;

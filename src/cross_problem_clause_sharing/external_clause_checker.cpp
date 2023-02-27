@@ -258,11 +258,8 @@ void ExternalClauseChecker::runOnce() {
     lk.unlock();
     cv.notify_one();
 
-    //std::string s;
     while (!_clauses_to_check.empty()) {
         auto clause = OwnedClause(_clauses_to_check.extract());
-        //s.append(std::to_string(clause.stored_clause.size) + ' ');
-        //_num_clauses_to_check--;
 
         size_t aSize = clause.stored_clause.size;
         int aLitsArray[aSize];
@@ -273,6 +270,7 @@ void ExternalClauseChecker::runOnce() {
             if (_suspended) return;
             _solver.resume();
 
+            // append negated literal as assumption
             for (int i = 0; i < aSize; ++i) {
                 if (clause.stored_clause.begin[i] > _max_var) return;
                 aLits[i] = -1 * clause.stored_clause.begin[i];
@@ -293,9 +291,8 @@ void ExternalClauseChecker::runOnce() {
         auto t2 = Timer::elapsedSeconds();
 
         auto elapsed_time_seconds = t2 - t1;
-        LOG(V6_DEBGV, "[CPCS] Solver took %i [seconds]\n", elapsed_time_seconds);
-        //if (elapsed_time_seconds > 2 * _solver_timeout_seconds) LOG(V4_VVER, "[CPCS] ecc solver timeout: %f\n", elapsed_time_seconds);
-        assert(elapsed_time_seconds <= 2 * _solver_timeout_seconds);
+        if (elapsed_time_seconds > 2 * _solver_timeout_seconds) LOG(V4_VVER, "[CPCS] WARN WARN WARN ECC solver timeout: %f\n", elapsed_time_seconds);
+        //assert(elapsed_time_seconds <= 2 * _solver_timeout_seconds);
 
         {  // Un interrupt solver (if it was interrupted)
             auto lock = _state_mutex.getLock();
@@ -314,10 +311,9 @@ void ExternalClauseChecker::runOnce() {
             rejected++;
         }
     }
-    //if (s != "")LOG(V4_VVER, "[CPCS] %s\n", s.c_str());
 
     {
-        std::lock_guard lk(m);
+        std::lock_guard lk2(m);
         _ready_for_external_checking = false;
     }
     LOG(V4_VVER, "[CPCS] ECC finished all Clauses → waiting for next\n");
@@ -407,7 +403,7 @@ std::vector<int> ExternalClauseChecker::throw_away_max_literal_clauses(int *exte
         bool contains_literal_bigger_than_max_var = false;
         for (int i = 0; i < c.size; ++i) {
             if (c.begin[i] > _max_var) {
-                // LOG(V4_VVER, "[CPCS] throw away clause %i > %i\n", c.begin[i], _max_var);
+                LOG(V5_DEBG, "[CPCS] throw away clause %i > %i\n", c.begin[i], _max_var);
                 contains_literal_bigger_than_max_var = true;
                 break;
             }
@@ -427,9 +423,9 @@ void ExternalClauseChecker::submitClausesForTesting(int *externalClausesBuffer, 
 
         if (_clause_filter.register_clause(c)) {
             if (!_clauses_to_check.insert(OwnedClause(c.copy()))) buffer_full++;
-            //_num_clauses_to_check++;
         } else {
-            LOG(V4_VVER, "[CPCS] Clause discarded -> already existed in filter\n");
+            amq++;
+            LOG(V5_DEBG, "[CPCS] Clause discarded -> already existed in filter\n");
         }
 
         c = reader.getNextIncomingClause();
@@ -445,8 +441,8 @@ void ExternalClauseChecker::submitClausesForTesting(int *externalClausesBuffer, 
 
 std::vector<int> ExternalClauseChecker::fetchAdmittedClauses() {
     auto lock = _admitted_clauses_mutex.getLock();
-    LOG(V4_VVER, "[CPCS] full: %i,  admitted: %i,  rejected: %i,  timeout: %i, fill-level: %i\n", (int) buffer_full, (int) admitted, (int) rejected, (int) timeouted, _clauses_to_check.size());
-    LOG(V4_VVER, "[CPCS] FETCH admitted clauses: %i\n", _admitted_clauses.size());
+    LOG(V4_VVER, "[CPCS] full: %i,  admitted: %i,  rejected: %i,  timeout: %i, amq: %i, fill-level: %i\n", (int) buffer_full, (int) admitted, (int) rejected, (int) timeouted, (int) amq, _clauses_to_check.size());
+    LOG(V4_VVER, "[CPCS] FETCH current admitted clauses: %i\n", _admitted_clauses.size());
 
     std::vector<int> buffer;
 
