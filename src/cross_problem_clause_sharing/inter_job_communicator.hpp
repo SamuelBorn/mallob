@@ -29,6 +29,8 @@ public:
 
     void setGroupId(int group_id);
 
+    int getGroupId();
+
     int getNextRingMemberRank();
 
     void setNextRingMemberRank(int nextRingMemberRank);

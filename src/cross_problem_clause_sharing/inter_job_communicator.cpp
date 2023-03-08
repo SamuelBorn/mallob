@@ -19,7 +19,7 @@ void InterJobCommunicator::gatherIntoRing(std::map<int, std::pair<int, bool>> &r
 
 // If the job is a representative that is not part of a ring  →  create a ring by himself
 bool InterJobCommunicator::createNewRing(std::map<int, std::pair<int, bool>> &reps) {
-    assert(reps.count(_group_id));
+    //assert(reps.count(_group_id));
     if (reps[_group_id].first == _rank && !reps[_group_id].second) {
         LOG(V4_VVER, "[CPCS] Create new ring by myself\n");
         _next_ring_member_rank = _rank;
@@ -73,6 +73,10 @@ void InterJobCommunicator::setGroupId(int group_id) {
     _group_id = group_id;
 }
 
+int InterJobCommunicator::getGroupId() {
+    return _group_id;
+};
+
 bool InterJobCommunicator::isRingMember() {
     return _next_ring_member_rank != -1;
 }
@@ -118,4 +122,4 @@ void InterJobCommunicator::setRingAction(std::function<void(RingMessage &)> call
 
 InterJobCommunicator::InterJobCommunicator() {
     LOG(V5_DEBG, "[CPCS] IJC created\n");
-};
+}
