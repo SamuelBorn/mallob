@@ -26,7 +26,7 @@ using namespace SolvingStates;
 ExternalClauseChecker::ExternalClauseChecker(const Parameters &params, const SatProcessConfig &config, const SolverSetup &solverSetup,
                                              size_t fSize, const int *fLits, size_t aSize, const int *aLits, int localId) :
         _params(params), _solver_ptr(createLocalSolverInterface(solverSetup)), _solver(*_solver_ptr),
-        _logger(_solver.getLogger()), _local_id(localId),
+        _logger(_solver.getLogger()), _local_id(localId), _clause_filter(params.strictClauseLengthLimit()),
         _has_pseudoincremental_solvers(_solver.getSolverSetup().hasPseudoincrementalSolvers) {
 
     _portfolio_rank = config.apprank;
@@ -421,7 +421,7 @@ void ExternalClauseChecker::submitClausesForTesting(int *externalClausesBuffer, 
     Clause c = reader.getNextIncomingClause();
     while (c.begin != nullptr) {
 
-        if (_clause_filter.register_clause(c)) {
+        if (_clause_filter.registerClause(c)) {
             if (!_clauses_to_check.insert(OwnedClause(c.copy()))) buffer_full++;
         } else {
             amq++;

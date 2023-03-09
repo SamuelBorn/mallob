@@ -116,9 +116,11 @@ private:
 	AtomicBitset _bitset;
 	int _max_clause_length = 0;
 	std::atomic_bool _clear{false};
+    int _num_bits = NUM_BITS;
 
 public:
 	ClauseFilter() : _bitset(NUM_BITS), _max_clause_length(0) {}
+    ClauseFilter(int numBits, int maxClauseLength) : _bitset(numBits), _max_clause_length(maxClauseLength), _num_bits(numBits) {}
 	ClauseFilter(int maxClauseLen) : _bitset(NUM_BITS), _max_clause_length(maxClauseLen) {}
 	ClauseFilter(const ClauseFilter& other) : _bitset(other._bitset), _max_clause_length(other._max_clause_length) {}
 	ClauseFilter(ClauseFilter&& other) : _bitset(std::move(other._bitset)), _max_clause_length(other._max_clause_length) {}
@@ -130,6 +132,9 @@ public:
 	 */
 	bool registerClause(const std::vector<int>& cls);
 	bool registerClause(const int* first, int size);
+
+    bool likely_contains(const int *begin, int size);
+    bool likely_contains(const std::vector<int> &cls);
 
 	/**
 	 * Clear the filter, i.e., return to its initial state.
