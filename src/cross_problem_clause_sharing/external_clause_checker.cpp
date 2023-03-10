@@ -8,6 +8,9 @@
 #include <condition_variable>
 #include <chrono>
 #include <list>
+#include <csignal>
+#include <unistd.h>
+#include <iostream>
 
 #include "util/assert.hpp"
 
@@ -291,7 +294,12 @@ void ExternalClauseChecker::runOnce() {
         auto t2 = Timer::elapsedSeconds();
 
         auto elapsed_time_seconds = t2 - t1;
-        if (elapsed_time_seconds > 2 * _solver_timeout_seconds) LOG(V4_VVER, "[CPCS] WARN WARN WARN ECC solver timeout: %f\n", elapsed_time_seconds);
+        if (elapsed_time_seconds > 2 * _solver_timeout_seconds) LOG(V4_VVER, "[CPCS] WARNING ECC solver timeout: %f\n", elapsed_time_seconds);
+//        if (elapsed_time_seconds > 1) {
+//            LOG(V4_VVER, "[CPCS] FROOOOOOOOOOOOOOOOOOOOOOZEN PID: %i  -- LET IT GO\n", getpid());
+//            //abort(); 38187 PID
+//            raise(SIGSTOP);
+//        }
         //assert(elapsed_time_seconds <= 2 * _solver_timeout_seconds);
 
         {  // Un interrupt solver (if it was interrupted)

@@ -2,8 +2,6 @@
     "user": "born",
     "name": "group-nocheck",
     "application": "SAT",
-    "wallclock-limit": "16m",
-    "cpu-limit": "8h",
     "group_id": "group-check-0",
     "check_external": false
 }

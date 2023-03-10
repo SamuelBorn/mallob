@@ -1,4 +1,1 @@
-instances/r3unsat_300.cnf
-instances/r3unsat_300.cnf
-instances/r3unsat_300.cnf
-instances/r3unsat_300.cnf
+../madagascar/domains/sat/settlers-psat-small-09-medium.010.cnf

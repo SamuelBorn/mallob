@@ -22,14 +22,19 @@ def main(single_problem, instance_file, output_file_path, n, j, num_cores, timeo
         f.write(json.dumps(results))
 
 
+def exec_mallob(num_cores, timeout_seconds, num_jobs, stop_after, instance_file, identifier_group_nogroup):
+    return subprocess.check_output(f'mpirun -np {num_cores} --bind-to core build/mallob '
+                                   f'-jwl={timeout_seconds} -v=2 -c=1 -ajpc={num_jobs} -ljpc={2 * num_jobs} -J={stop_after} '
+                                   f'-job-desc-template={instance_file} '
+                                   f'-job-template=scripts/cpcs/input/job-{identifier_group_nogroup}.json '
+                                   f'-client-template=templates/client-template.json', shell=True)
+
+
 def run_once(timeout_seconds, instance_file, num_jobs, num_cores, identifier_group_nogroup, stop_after=None):
     if not stop_after:
         stop_after = num_jobs
-    output = subprocess.check_output(f'mpirun -np {num_cores} --bind-to core build/mallob '
-                                     f'-jwl={timeout_seconds} -v=2 -c=1 -ajpc={num_jobs} -ljpc={2 * num_jobs} -J={stop_after} '
-                                     f'-job-desc-template={instance_file} '
-                                     f'-job-template=scripts/cpcs/input/job-{identifier_group_nogroup}.json '
-                                     f'-client-template=templates/client-template.json', shell=True)
+
+    output = exec_mallob(num_cores, timeout_seconds, num_jobs, stop_after, instance_file, identifier_group_nogroup)
 
     filtered = [float(line.split(" ")[4]) for line in output.decode("utf-8").split("\n") if "RESPONSE_TIME" in line]
     return sum(filtered) / len(filtered) if len(filtered) >= stop_after else 2 * timeout_seconds
@@ -48,11 +53,7 @@ def run_multiple(timeout_seconds, instance_file, num_jobs, num_cores, identifier
 def run_once_unfiltered(timeout_seconds, instance_file, num_jobs, num_cores, identifier_group_nogroup, stop_after=None):
     if not stop_after: stop_after = num_jobs
 
-    output = subprocess.check_output(f'mpirun -np {num_cores} --bind-to core build/mallob '
-                                     f'-jwl={timeout_seconds} -v=2 -c=1 -ajpc={num_jobs} -ljpc={2 * num_jobs} -J={stop_after} '
-                                     f'-job-desc-template={instance_file} '
-                                     f'-job-template=scripts/cpcs/input/job-{identifier_group_nogroup}.json '
-                                     f'-client-template=templates/client-template.json', shell=True)
+    output = exec_mallob(num_cores, timeout_seconds, num_jobs, stop_after, instance_file, identifier_group_nogroup)
 
     filtered = [float(line.split(" ")[4]) for line in output.decode("utf-8").split("\n") if "RESPONSE_TIME" in line]
     while len(filtered) < stop_after: filtered.append(2 * timeout_seconds)
