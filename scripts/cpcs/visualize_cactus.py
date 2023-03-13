@@ -12,17 +12,19 @@ colors = ['#377eb8', '#ff7f00', '#e41a1c', '#f781bf', '#a65628', '#4daf4a', '#98
 
 def visualize_cactus(input_file):
     plt.rc('font', size=18)
-    plt.figure(figsize=(8, 14))
-    plt.ylabel("XX")
-    plt.xlabel("XX")
+    plt.figure(figsize=(8, 8))
+
+    plt.ylabel("# instances solved in ≤ t s")
+    plt.xlabel("Run time t / s")
 
     with open(input_file, "r") as f:
         results = json.load(f)
 
     for idx, (group_nogroup, finish_times) in enumerate(results.items()):
         x, y = generate_cactus_data(finish_times)
-        plt.plot(x, y, marker=markers[idx % len(markers)], color=colors[idx % len(colors)])
+        plt.plot(x, y, marker=markers[idx % len(markers)], color=colors[idx % len(colors)], label=group_nogroup)
 
+    plt.legend(loc="lower right")
     plt.show()
 
 

@@ -43,7 +43,7 @@ def run_once(timeout_seconds, instance_file, num_jobs, num_cores, identifier_gro
 def run_multiple(timeout_seconds, instance_file, num_jobs, num_cores, identifier_group_nogroup, n, stop_after=None):
     results = []
     for i in range(n):
-        print(f"{datetime.datetime.now()} - {i}/{n} - {identifier_group_nogroup}")
+        print(f"{datetime.datetime.now()} - {i+1}/{n} - {identifier_group_nogroup}")
         result = run_once(timeout_seconds, instance_file, num_jobs, num_cores, identifier_group_nogroup, stop_after)
         print(result)
         results.append(result)
@@ -55,7 +55,8 @@ def run_once_unfiltered(timeout_seconds, instance_file, num_jobs, num_cores, ide
 
     output = exec_mallob(num_cores, timeout_seconds, num_jobs, stop_after, instance_file, identifier_group_nogroup)
 
-    filtered = [float(line.split(" ")[4]) for line in output.decode("utf-8").split("\n") if "RESPONSE_TIME" in line]
+    # filtered = [float(line.split(" ")[4]) for line in output.decode("utf-8").split("\n") if "RESPONSE_TIME" in line]
+    filtered = [float(line.split(" ")[0]) for line in output.decode("utf-8").split("\n") if "RESPONSE_TIME" in line]
     while len(filtered) < stop_after: filtered.append(2 * timeout_seconds)
     return filtered
 
@@ -63,7 +64,7 @@ def run_once_unfiltered(timeout_seconds, instance_file, num_jobs, num_cores, ide
 def run_multiple_unfiltered(timeout_seconds, instance_file, num_jobs, num_cores, identifier_group_nogroup, n, stop_after=None):
     results = []
     for i in range(n):
-        print(f"{datetime.datetime.now()} - {i}/{n} - {identifier_group_nogroup}")
+        print(f"{datetime.datetime.now()} - {i+1}/{n} - {identifier_group_nogroup}")
         result = run_once_unfiltered(timeout_seconds, instance_file, num_jobs, num_cores, identifier_group_nogroup, stop_after)
         print(result)
         results.append(result)

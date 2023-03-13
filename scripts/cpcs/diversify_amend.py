@@ -17,6 +17,10 @@ def main(num_variables, overlap, n):
     return [f"scripts/cpcs/temp/diversified-{i}.cnf" for i in range(n)]
 
 
+def create_problem2(num_variables):
+    return create_problem(num_variables, round(4.17 * num_variables))
+
+
 def create_problem(num_variables, num_clauses):
     out = "p cnf " + str(num_variables) + " " + str(num_clauses) + "\n"
     out += create_clauses(num_variables, num_clauses)

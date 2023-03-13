@@ -15,7 +15,7 @@ def main(instances, output, time_limit, cores, jobs):
         'nogroup-4': run_mallob_and_get_finish_times(instances, time_limit, cores, 4, "nogroup"),
         'group-check-4': run_mallob_and_get_finish_times(instances, time_limit, cores, 4, "group-check"),
         'nogroup-5': run_mallob_and_get_finish_times(instances, time_limit, cores, 5, "nogroup"),
-        'group-check-5': run_mallob_and_get_finish_times(instances, time_limit, cores, 5, "group-check"),
+        'group-check-5': run_mallob_and_get_finish_times(instances, time_limit, cores, 5, "group-check")
     }
 
     with open(output, "w") as f:
