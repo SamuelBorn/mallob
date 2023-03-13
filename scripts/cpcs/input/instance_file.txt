@@ -1,1 +1,3 @@
-../madagascar/domains/sat/settlers-psat-small-09-medium.010.cnf
+/home/sam/Dropbox/semester7/Bachelorarbeit/mallob/instances/r3unsat_300.cnf
+/home/sam/Dropbox/semester7/Bachelorarbeit/mallob/instances/r3unsat_300.cnf
+/home/sam/Dropbox/semester7/Bachelorarbeit/mallob/instances/r3unsat_300.cnf

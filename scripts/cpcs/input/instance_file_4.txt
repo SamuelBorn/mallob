@@ -1,0 +1,4 @@
+../madagascar/domains/sat/snake-snake-empty-6x6-1-5-18-22170.035.cnf
+../madagascar/domains/sat/snake-snake-empty-6x6-1-5-18-22170.036.cnf
+../madagascar/domains/sat/snake-snake-empty-6x6-1-5-18-22170.037.cnf
+../madagascar/domains/sat/snake-snake-empty-6x6-1-5-18-22170.038.cnf
