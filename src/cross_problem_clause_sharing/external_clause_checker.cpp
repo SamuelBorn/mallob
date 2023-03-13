@@ -315,6 +315,8 @@ void ExternalClauseChecker::runOnce() {
             admitted++;
         } else if (elapsed_time_seconds >= 0.95 * _solver_timeout_seconds) {
             timeouted++;
+        } else if (res == UNKNOWN) {
+            unknown++;
         } else {
             rejected++;
         }
@@ -449,7 +451,7 @@ void ExternalClauseChecker::submitClausesForTesting(int *externalClausesBuffer, 
 
 std::vector<int> ExternalClauseChecker::fetchAdmittedClauses() {
     auto lock = _admitted_clauses_mutex.getLock();
-    LOG(V4_VVER, "[CPCS] full: %i,  admitted: %i,  rejected: %i,  timeout: %i, amq: %i, fill-level: %i\n", (int) buffer_full, (int) admitted, (int) rejected, (int) timeouted, (int) amq, _clauses_to_check.size());
+    LOG(V4_VVER, "[CPCS] full: %i,  admitted: %i,  rejected: %i,  timeout: %i, amq: %i, fill-level: %i, unknown: %i\n", (int) buffer_full, (int) admitted, (int) rejected, (int) timeouted, (int) amq, _clauses_to_check.size(), (int) unknown);
     LOG(V4_VVER, "[CPCS] FETCH current admitted clauses: %i\n", _admitted_clauses.size());
 
     std::vector<int> buffer;

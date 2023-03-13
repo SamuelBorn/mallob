@@ -37,6 +37,7 @@ private:
     std::atomic_int rejected = 0;
     std::atomic_int timeouted = 0;
     std::atomic_int amq = 0;
+    std::atomic_int unknown = 0;
 
     //Mutex _clauses_to_check_mutex;
     Mutex _admitted_clauses_mutex;
