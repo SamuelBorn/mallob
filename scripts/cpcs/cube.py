@@ -14,7 +14,6 @@ import diversify_amend
 
 def main(single_problem, output_file_path, num_tests, num_jobs, num_cores, timeout):
     cube_instances = create_cube_instances(single_problem, num_jobs)
-    print(cube_instances)
     duplication_instances = create_duplication_instances(single_problem, num_jobs)
 
     results = {
@@ -25,6 +24,25 @@ def main(single_problem, output_file_path, num_tests, num_jobs, num_cores, timeo
 
     with open(output_file_path, "w") as f:
         json.dump(results, f)
+
+
+def cube_compare(num_cores, num_tests, timeout=100):
+    instances = ['../madagascar/domains/sat/snake-snake-empty-6x6-1-5-18-22170.035.cnf',
+                 '../madagascar/domains/sat/snake-snake-empty-6x6-1-5-18-22170.036.cnf',
+                 '../madagascar/domains/sat/snake-snake-empty-6x6-1-5-18-22170.037.cnf',
+                 '../madagascar/domains/sat/snake-snake-empty-6x6-1-5-18-22170.038.cnf']
+
+    for idx, instance in enumerate(instances):
+        cube_instances = create_cube_instances(instance, 2)
+        results = {
+            "group + cube2": compare.run_multiple_unfiltered(timeout, cube_instances, 2, num_cores, "group-nocheck", num_tests, 2),
+            "group + cube4": compare.run_multiple_unfiltered(timeout, cube_instances, 4, num_cores, "group-nocheck", num_tests, 4),
+            "no group + cube2": compare.run_multiple_unfiltered(timeout, cube_instances, 2, num_cores, "nogroup", num_tests, 2),
+            "no group + cube4": compare.run_multiple_unfiltered(timeout, cube_instances, 4, num_cores, "nogroup", num_tests, 4),
+            "no group + mono": exec_mono_multiple(num_cores, timeout, instance, num_tests)
+        }
+        with open(f"scripts/cpcs/output/cube_results_{idx}.json", "w") as f:
+            json.dump(results, f)
 
 
 def cube_increase(timeout, cores, output="scripts/cpcs/output/cube_times.json"):
@@ -107,12 +125,13 @@ def negate_list_based_on_int_bits(x, nums):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument("-i", help="Input a single Problem file (will get duplicated)", required=True)
+    parser.add_argument("-i", help="Input a single Problem file (will get duplicated)", default="instances/r3sat_500.cnf")
     parser.add_argument("-o", help="Output File", default="scripts/cpcs/output/cube_time.json")
     parser.add_argument("-n", help="Tests to perform", type=int, default=1)
     parser.add_argument("-j", help="Num jobs to run with", type=int, default=4)
     parser.add_argument("-c", help="Num cores to execute on", type=int, default=4)
     parser.add_argument("-t", help="Timeout in seconds", type=int, default=240)
     args = parser.parse_args()
-    #main(args.i, args.o, args.n, args.j, args.c, args.t)
-    cube_increase(args.t, args.c)
+    # main(args.i, args.o, args.n, args.j, args.c, args.t)
+    # cube_increase(args.t, args.c)
+    cube_compare(args.c, args.n, args.t)

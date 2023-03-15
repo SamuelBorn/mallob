@@ -29,8 +29,6 @@ def run_mallob_and_get_finish_times(instances, time_limit, cores, jobs, group_no
                                      f'-job-template=scripts/cpcs/input/job-{group_nogroup}.json '
                                      f'-client-template=templates/client-template.json', shell=True)
 
-    print(output.decode('utf-8'))
-
     return [float(line.split(" ")[0]) for line in output.decode("utf-8").split("\n") if "RESPONSE_TIME" in line]
 
 
