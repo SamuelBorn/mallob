@@ -32,6 +32,8 @@ def cube_compare(num_cores, num_tests, timeout=100):
                  '../madagascar/domains/sat/snake-snake-empty-6x6-1-5-18-22170.037.cnf',
                  '../madagascar/domains/sat/snake-snake-empty-6x6-1-5-18-22170.038.cnf']
 
+    instances = ['instances/r3sat_300.cnf']
+
     for idx, instance in enumerate(instances):
         cube_instances = create_cube_instances(instance, 2)
         results = {
@@ -43,6 +45,61 @@ def cube_compare(num_cores, num_tests, timeout=100):
         }
         with open(f"scripts/cpcs/output/cube_results_{idx}.json", "w") as f:
             json.dump(results, f)
+
+
+def cube_random(cores, output="scripts/cpcs/output/cube_times.json", num_vars=340, num_tries=1, timeout=120):
+    results = {"cube2": [], "cube4": [], "cube2nogroup": [], "cube4nogroup": [], "mono": []}
+    while num_tries > 0:
+        instance = "scripts/cpcs/temp/cube_instance"
+        with open(instance, "w") as f:
+            f.write(diversify_amend.create_problem2(num_vars))
+
+        print('mono')
+        mono = exec_mono(cores, round(timeout / 2), instance)
+        if not mono or mono[0] < 20 or mono[0] > 0.9 * round(timeout / 2):
+            print('too long or short')
+            continue
+        num_tries -= 1
+        results["mono"].append(mono[0])
+
+        print('cube2')
+        cube_instances = create_cube_instances(instance, 2)
+        cube2 = compare.run_once_unfiltered(4 * timeout, cube_instances, 2, cores, 'group-nocheck')
+        if len(cube2) >= 2:
+            res = cube2[1]
+        else:
+            res = 2 * timeout
+        results["cube2"].append(res)
+
+        print('cube4')
+        cube_instances = create_cube_instances(instance, 4)
+        cube4 = compare.run_once_unfiltered(4 * timeout, cube_instances, 4, cores, 'group-nocheck')
+        if len(cube4) >= 4:
+            res = cube4[3]
+        else:
+            res = 2 * timeout
+        results["cube4"].append(res)
+
+        print('cube2nogroup')
+        cube_instances = create_cube_instances(instance, 2)
+        cube2 = compare.run_once_unfiltered(4 * timeout, cube_instances, 2, cores, 'group-nocheck')
+        if len(cube4) >= 2:
+            res = cube4[1]
+        else:
+            res = 2 * timeout
+        results["cube2nogroup"].append(res)
+
+        print('cube4nogroup')
+        cube_instances = create_cube_instances(instance, 4)
+        cube4 = compare.run_once_unfiltered(4 * timeout, cube_instances, 4, cores, 'group-nocheck')
+        if len(cube4) >= 4:
+            res = cube4[3]
+        else:
+            res = 2 * timeout
+        results["cube4nogroup"].append(res)
+
+        with open(output, "w") as f:
+            f.write(results)
 
 
 def cube_increase(timeout, cores, output="scripts/cpcs/output/cube_times.json"):
@@ -134,4 +191,5 @@ if __name__ == '__main__':
     args = parser.parse_args()
     # main(args.i, args.o, args.n, args.j, args.c, args.t)
     # cube_increase(args.t, args.c)
-    cube_compare(args.c, args.n, args.t)
+    # cube_compare(args.c, args.n, args.t)
+    cube_random(args.c, timeout=120)
