@@ -96,6 +96,10 @@ void Worker::advance() {
         allGatherGroupIds();
     }
 
+    if (_complete_ring_rebuild.ready(time)) {
+        _inter_job_communicator.resetRingStatus();
+    }
+
     _watchdog.setActivity(Watchdog::IDLE_OR_HANDLING_MSG);
 }
 

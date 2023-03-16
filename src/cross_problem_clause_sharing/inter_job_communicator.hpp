@@ -27,6 +27,8 @@ public:
 
     bool isRingMember();
 
+    void resetRingStatus();
+
     void setGroupId(int group_id);
 
     int getGroupId();

@@ -49,6 +49,7 @@ private:
     PeriodicEvent<1> _periodic_balance_check;
     PeriodicEvent<1000> _periodic_maintenance;
     PeriodicEvent<1000> _all_gather_group_ids;
+    PeriodicEvent<20000> _complete_ring_rebuild;
     Watchdog _watchdog;
 
     std::atomic_bool _node_stats_calculated = true;

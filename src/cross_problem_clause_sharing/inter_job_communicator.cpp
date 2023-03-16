@@ -102,6 +102,10 @@ void InterJobCommunicator::setNextRingMemberRank(int nextRingMemberRank) {
     _next_ring_member_rank = nextRingMemberRank;
 }
 
+void InterJobCommunicator::resetRingStatus() {
+    setNextRingMemberRank(-1);
+}
+
 void InterJobCommunicator::forwardRingMessage(MessageHandle &h) {
     if (not isRingMember()) return;
     if (_next_ring_member_rank == _rank) return;
