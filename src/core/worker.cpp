@@ -232,7 +232,9 @@ void Worker::allGatherGroupIds() {
     if (valid_job) {
         int group_id = job.getDescription().getGroupId();
         contribution.data[group_id] = {MyMpi::rank(_comm), job.isRingMember()};
+
         _inter_job_communicator.setGroupId(group_id);
+        job.setInterJobCommunicator(&_inter_job_communicator);
         LOG(V5_DEBG, "[CPCS] GroupIDGather - GID: %i - Ring: %i\n", job.getDescription().getGroupId(), job.isRingMember());
     }
 
