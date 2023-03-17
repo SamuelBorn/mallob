@@ -168,8 +168,10 @@ void SatEngine::appendRevision(int revision, size_t fSize, const int* fLits, siz
 	_sharing_manager->setRevision(revision);
 
     if (revision == 0) {
-        _external_clause_checker = std::make_unique<ExternalClauseChecker>(_params, _config, _solver_setup, fSize, fLits, aSize, aLits, 0);
-
+        //_external_clause_checker = std::make_unique<ExternalClauseChecker>(_params, _config, _solver_setup, fSize, fLits, aSize, aLits, 0);
+        for (size_t i = 0; i < _params.numECCThreads(); i++) {
+            _external_clause_checkers.push_back(std::make_unique<ExternalClauseChecker>(_params, _config, _solver_setup, fSize, fLits, aSize, aLits, 0));
+        }
     }
 	for (size_t i = 0; i < _num_solvers; i++) {
 		if (revision == 0) {
@@ -177,6 +179,7 @@ void SatEngine::appendRevision(int revision, size_t fSize, const int* fLits, siz
 			_solver_threads.emplace_back(new SolverThread(
 				_params, _config, _solver_interfaces[i], fSize, fLits, aSize, aLits, i
 			));
+            LOG(V4_VVER, "[CPCS] emplace solver thread\n");
 		} else {
 			if (_solver_interfaces[i]->getSolverSetup().doIncrementalSolving) {
 				// True incremental SAT solving
@@ -337,13 +340,13 @@ void SatEngine::dumpStats(bool final) {
 void SatEngine::setPaused() {
 	_state = SUSPENDED;
 	for (auto& solver : _solver_threads) solver->setSuspend(true);
-    _external_clause_checker->setSuspend(true);
+    for (auto &ecc: _external_clause_checkers) ecc->setSuspend(true);
 }
 
 void SatEngine::unsetPaused() {
 	_state = ACTIVE;
 	for (auto& solver : _solver_threads) solver->setSuspend(false);
-    _external_clause_checker->setSuspend(false);
+    for (auto &ecc: _external_clause_checkers) ecc->setSuspend(false);
 }
 
 void SatEngine::terminateSolvers() {
@@ -353,8 +356,8 @@ void SatEngine::terminateSolvers() {
 			solver->setSuspend(false);
 			solver->setTerminate();
 		}
-        _external_clause_checker->setSuspend(false);
-        _external_clause_checker->setTerminate();
+        for (auto &ecc: _external_clause_checkers) ecc->setSuspend(false);
+        for (auto &ecc: _external_clause_checkers) ecc->setTerminate();
 	}
 }
 
@@ -397,31 +400,44 @@ SatEngine::~SatEngine() {
 }
 
 void SatEngine::incorporateExternalClausesWithoutChecking(int *externalClausesBuffer, int externalClausesBufferSize){
-    assert(_external_clause_checker);
-    auto cleared = _external_clause_checker->throw_away_max_literal_clauses(externalClausesBuffer, externalClausesBufferSize);
+    assert(_external_clause_checkers.at(0));
+    auto cleared = _external_clause_checkers.at(0)->throw_away_max_literal_clauses(externalClausesBuffer, externalClausesBufferSize);
     LOG(V4_VVER, "[CPCS] no check vector size after throw away: %i, before %i\n", cleared.size(), externalClausesBufferSize);
     if (cleared.empty()) return;
     digestSharingWithoutFilter(cleared.data(), cleared.size());
 }
 
 void SatEngine::checkExternalClausesForImport(int *externalClausesBuffer, int externalClausesBufferSize) {
-    if (!_external_clause_checker) {
-        LOG(V4_VVER, "[CPCS] Engine: Submit failed, ECC not init\n");
-        return;
+    if (_external_clause_checkers.empty()) return;
+    startECCThreads();
+    std::vector<std::vector<OwnedClause>> assigned_clauses(_external_clause_checkers.size());
+    auto reader = BufferReader(externalClausesBuffer, externalClausesBufferSize, _params.strictClauseLengthLimit(), _params.groupClausesByLengthLbdSum(), false);
+    Clause c = reader.getNextIncomingClause();
+    while (c.begin != nullptr) {
+        auto assigned_ecc = ClauseHasher::hash(c, 3) % _external_clause_checkers.size();
+        assigned_clauses.at(assigned_ecc).emplace_back(c.copy());
+        c = reader.getNextIncomingClause();
     }
-    if (!_external_clause_checker_already_started) {
-        _external_clause_checker_already_started = true;
-        _external_clause_checker->start();
+
+    for (int i = 0; i < _external_clause_checkers.size(); ++i) {
+        _external_clause_checkers.at(i)->submitClausesForTesting(assigned_clauses.at(i));
     }
-    _external_clause_checker->submitClausesForTesting(externalClausesBuffer, externalClausesBufferSize);
+}
+
+void SatEngine::startECCThreads(){
+    for (auto &checker: _external_clause_checkers){
+        if (not checker->hasStarted()) {
+            LOG(V4_VVER, "[CPCS] Starting ECC THREAD\n");
+            checker->start();
+        }
+    }
 }
 
 void SatEngine::incorporateAdmittedExternalClauses() {
-    if (!_external_clause_checker) {
-        LOG(V4_VVER, "[CPCS] Engine: Incorporate failed, ECC not init\n");
-        return;
+    for (const auto &ecc: _external_clause_checkers){
+        auto clauses = ecc->fetchAdmittedClauses();
+        if (clauses.empty()) return;
+        LOG(V4_VVER, "[CPCS] incorporate\n");
+        digestSharingWithoutFilter(clauses.data(), clauses.size());
     }
-    auto clauses = _external_clause_checker->fetchAdmittedClauses();
-    if (clauses.empty()) return;
-    digestSharingWithoutFilter(clauses.data(), clauses.size());
 }

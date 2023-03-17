@@ -43,6 +43,7 @@ ExternalClauseChecker::ExternalClauseChecker(const Parameters &params, const Sat
 }
 
 void ExternalClauseChecker::start() {
+    started = true;
     if (!_thread.joinable())
         _thread = std::thread([this]() {
             init();
@@ -424,6 +425,22 @@ std::vector<int> ExternalClauseChecker::throw_away_max_literal_clauses(int *exte
         c = reader.getNextIncomingClause();
     }
     return builder.extractBuffer();
+}
+
+void ExternalClauseChecker::submitClausesForTesting(std::vector<OwnedClause> &externalClauses) {
+    for (const auto &clause: externalClauses){
+        if (_clause_filter.registerClause(clause.stored_clause)){
+            if (!_clauses_to_check.insert(OwnedClause(clause.stored_clause.copy()))) buffer_full++;
+        } else {
+            amq++;
+        }
+    }
+
+    {
+        std::lock_guard lk(m);
+        _ready_for_external_checking = true;
+    }
+    cv.notify_one();
 }
 
 void ExternalClauseChecker::submitClausesForTesting(int *externalClausesBuffer, int externalClausesBufferSize) {

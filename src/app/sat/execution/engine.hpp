@@ -33,8 +33,7 @@ private:
 	std::vector<std::shared_ptr<SolverThread>> _solver_threads;
 	std::vector<std::shared_ptr<SolverThread>> _obsolete_solver_threads;
 
-    std::shared_ptr<ExternalClauseChecker> _external_clause_checker;
-    bool _external_clause_checker_already_started = false;
+    std::vector<std::shared_ptr<ExternalClauseChecker>> _external_clause_checkers;
 
 	struct RevisionData {
 		size_t fSize;
@@ -97,4 +96,5 @@ private:
 
 	std::shared_ptr<PortfolioSolverInterface> createSolver(const SolverSetup& setup);
 
+    void startECCThreads();
 };

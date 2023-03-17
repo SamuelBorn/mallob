@@ -25,7 +25,7 @@ class SatEngine;
 class ExternalClauseChecker {
 
 private:
-    const float _solver_timeout_seconds = 0.05f;
+    const float _solver_timeout_seconds = 0.02f;
 
     const int _max_clause_count = 5000;
     MinLBDBuffer _clauses_to_check_implementation = MinLBDBuffer(_max_clause_count);
@@ -38,6 +38,8 @@ private:
     std::atomic_int timeouted = 0;
     std::atomic_int amq = 0;
     std::atomic_int unknown = 0;
+
+    bool started=false;
 
     //Mutex _clauses_to_check_mutex;
     Mutex _admitted_clauses_mutex;
@@ -91,6 +93,7 @@ public:
     ~ExternalClauseChecker();
 
     void start();
+    bool hasStarted() { return started; };
     void appendRevision(int revision, size_t fSize, const int* fLits, size_t aSize, const int* aLits);
     void setSuspend(bool suspend) {
         {
@@ -125,6 +128,7 @@ public:
 
     std::vector<int> throw_away_max_literal_clauses(int *externalClausesBuffer, int externalClausesBufferSize);
     void submitClausesForTesting(int *externalClausesBuffer, int externalClausesBufferSize);
+    void submitClausesForTesting(std::vector<OwnedClause> &externalClauses);
     std::vector<int> fetchAdmittedClauses();
     bool hasAdmittedClauses();
     bool readFormula();
@@ -150,5 +154,6 @@ private:
     Cadical* createLocalSolverInterface(const SolverSetup &solverSetup);
 
     const char* toStr();
+
 
 };
