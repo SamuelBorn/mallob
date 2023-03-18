@@ -27,6 +27,7 @@ private:
 	int _job_id;
 	
 	size_t _num_solvers;
+    bool _is_enigne_of_root_worker;
 	
 	std::unique_ptr<SharingManager> _sharing_manager;
 	std::vector<std::shared_ptr<PortfolioSolverInterface>> _solver_interfaces;

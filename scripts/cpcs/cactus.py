@@ -8,28 +8,46 @@ from datetime import datetime
 
 
 def main(instances, output, time_limit, cores, jobs):
-    results = {
-        'without sharing':     run_mallob_and_get_finish_times(instances, time_limit, cores, jobs, "nogroup",     8, 0),
-        '7 solver, 1 checker': run_mallob_and_get_finish_times(instances, time_limit, cores, jobs, "group-check", 7, 1),
-        '6 solver, 2 checker': run_mallob_and_get_finish_times(instances, time_limit, cores, jobs, "group-check", 6, 2),
-        '5 solver, 3 checker': run_mallob_and_get_finish_times(instances, time_limit, cores, jobs, "group-check", 5, 3),
-        '4 solver, 4 checker': run_mallob_and_get_finish_times(instances, time_limit, cores, jobs, "group-check", 4, 4),
-        '2 solver, 6 checker': run_mallob_and_get_finish_times(instances, time_limit, cores, jobs, "group-check", 2, 6),
-    }
+    results = {}
 
-    with open(output, "w") as f:
-        f.write(json.dumps(results))
+    results['4 solver, 0 checker'] = run_mallob_and_get_finish_times(instances, time_limit, cores, jobs, "nogroup", 4, 0)
+    with open(output, "w") as f: f.write(json.dumps(results))
+
+    results['4 solver, 1 checker'] = run_mallob_and_get_finish_times(instances, time_limit, cores, jobs, "group-check", 4, 1)
+    with open(output, "w") as f: f.write(json.dumps(results))
+
+    results['4 solver, 2 checker'] = run_mallob_and_get_finish_times(instances, time_limit, cores, jobs, "group-check", 4, 2)
+    with open(output, "w") as f: f.write(json.dumps(results))
+
+    results['4 solver, 3 checker'] = run_mallob_and_get_finish_times(instances, time_limit, cores, jobs, "group-check", 4, 3)
+    with open(output, "w") as f: f.write(json.dumps(results))
+
+    results['4 solver, 4 checker'] = run_mallob_and_get_finish_times(instances, time_limit, cores, jobs, "group-check", 4, 4)
+    with open(output, "w") as f: f.write(json.dumps(results))
 
 
 def run_mallob_and_get_finish_times(instances, time_limit, cores, jobs, group_nogroup, threads, ecct):
     print(f'Started: {datetime.now()}, {group_nogroup}, t={threads}, ecct={ecct}')
-    output = subprocess.check_output(f'mpirun -np {cores} --bind-to core build/mallob '
-                                     f'-T={time_limit} -v=2 -c=1 -ajpc={jobs} -ljpc={2 * jobs} -J=60 -t={threads} -ecct={ecct} '
+    output = subprocess.check_output(f'mpirun -np {cores} --bind-to core --map-by ppr:{cores}:node:pe={threads} build/mallob '
+                                     f'-T={time_limit} -v=2 -J=60 -ajpc={jobs} -t={threads} -ecct={ecct} '
                                      f'-job-desc-template={instances} '
                                      f'-job-template=scripts/cpcs/input/job-{group_nogroup}.json '
                                      f'-client-template=templates/client-template.json', shell=True)
 
-    return [float(line.split(" ")[0]) for line in output.decode("utf-8").split("\n") if "RESPONSE_TIME" in line]
+    lines = [line for line in output.decode("utf-8").split("\n") if "RESPONSE_TIME" in line]
+    exec_times = []
+    for line in lines:
+        try:
+            exec_time = float(line.split(" ")[0])
+            exec_times.append(exec_time)
+        except:
+            try:
+                exec_time = float(line.split(" ")[1])
+                exec_times.append(exec_time)
+            except:
+                print('could not convert the following line: ', line)
+
+    return exec_times
 
 
 if __name__ == '__main__':

@@ -25,21 +25,28 @@
 
 using namespace SolvingStates;
 
-SatEngine::SatEngine(const Parameters& params, const SatProcessConfig& config, Logger& loggingInterface) : 
+SatEngine::SatEngine(const Parameters& params, const SatProcessConfig& config, Logger& loggingInterface) :
 			_params(params), _config(config), _logger(loggingInterface), _state(INITIALIZING) {
-	
+
     int appRank = config.apprank;
 
 	LOGGER(_logger, V4_VVER, "SAT engine for %s\n", config.getJobStr().c_str());
 	//params.printParams();
 	_num_solvers = config.threads;
+
+    // when root node -> save computing resources for the ECC Thread
+    _is_enigne_of_root_worker = appRank == 0;
+    if (_is_enigne_of_root_worker) {
+        _num_solvers = _num_solvers - params.numECCThreads();
+    }
+
 	int numOrigSolvers = params.numThreadsPerProcess();
 	_job_id = config.jobid;
-	
+
 	// Retrieve the string defining the cycle of solver choices, one character per solver
 	// e.g. "llgc" => lingeling lingeling glucose cadical lingeling lingeling glucose ...
 	std::string solverChoices = params.satSolverSequence();
-	
+
 	// These numbers become the diversifier indices of the solvers on this node
 	int numLgl = 0;
 	int numGlu = 0;
@@ -161,16 +168,17 @@ std::shared_ptr<PortfolioSolverInterface> SatEngine::createSolver(const SolverSe
 }
 
 void SatEngine::appendRevision(int revision, size_t fSize, const int* fLits, size_t aSize, const int* aLits, bool lastRevisionForNow) {
-	
+
 	LOGGER(_logger, V4_VVER, "Import rev. %i: %i lits, %i assumptions\n", revision, fSize, aSize);
 	assert(_revision+1 == revision);
 	_revision_data.push_back(RevisionData{fSize, fLits, aSize, aLits});
 	_sharing_manager->setRevision(revision);
 
     if (revision == 0) {
-        //_external_clause_checker = std::make_unique<ExternalClauseChecker>(_params, _config, _solver_setup, fSize, fLits, aSize, aLits, 0);
-        for (size_t i = 0; i < _params.numECCThreads(); i++) {
-            _external_clause_checkers.push_back(std::make_unique<ExternalClauseChecker>(_params, _config, _solver_setup, fSize, fLits, aSize, aLits, 0));
+        if (_is_enigne_of_root_worker) {
+            for (size_t i = 0; i < _params.numECCThreads(); i++) {
+                _external_clause_checkers.push_back(std::make_unique<ExternalClauseChecker>(_params, _config, _solver_setup, fSize, fLits, aSize, aLits, 0));
+            }
         }
     }
 	for (size_t i = 0; i < _num_solvers; i++) {
