@@ -10,19 +10,15 @@ from datetime import datetime
 def main(instances, output, time_limit, cores, jobs):
     results = {}
 
-    results['4 solver, 0 checker'] = run_mallob_and_get_finish_times(instances, time_limit, cores, jobs, "nogroup", 4, 0)
+    results['8 solver, 0 checker'] = run_mallob_and_get_finish_times(instances, time_limit, cores, jobs, "nogroup", 8, 0)
     with open(output, "w") as f: f.write(json.dumps(results))
-
-    results['4 solver, 1 checker'] = run_mallob_and_get_finish_times(instances, time_limit, cores, jobs, "group-check", 4, 1)
+    results['8 solver, 1 checker'] = run_mallob_and_get_finish_times(instances, time_limit, cores, jobs, "group-check", 8, 1)
     with open(output, "w") as f: f.write(json.dumps(results))
-
-    results['4 solver, 2 checker'] = run_mallob_and_get_finish_times(instances, time_limit, cores, jobs, "group-check", 4, 2)
+    results['8 solver, 2 checker'] = run_mallob_and_get_finish_times(instances, time_limit, cores, jobs, "group-check", 8, 2)
     with open(output, "w") as f: f.write(json.dumps(results))
-
-    results['4 solver, 3 checker'] = run_mallob_and_get_finish_times(instances, time_limit, cores, jobs, "group-check", 4, 3)
+    results['8 solver, 3 checker'] = run_mallob_and_get_finish_times(instances, time_limit, cores, jobs, "group-check", 8, 3)
     with open(output, "w") as f: f.write(json.dumps(results))
-
-    results['4 solver, 4 checker'] = run_mallob_and_get_finish_times(instances, time_limit, cores, jobs, "group-check", 4, 4)
+    results['8 solver, 4 checker'] = run_mallob_and_get_finish_times(instances, time_limit, cores, jobs, "group-check", 8, 4)
     with open(output, "w") as f: f.write(json.dumps(results))
 
 
@@ -33,6 +29,8 @@ def run_mallob_and_get_finish_times(instances, time_limit, cores, jobs, group_no
                                      f'-job-desc-template={instances} '
                                      f'-job-template=scripts/cpcs/input/job-{group_nogroup}.json '
                                      f'-client-template=templates/client-template.json', shell=True)
+
+    # exclusive mpirun -np 8 --bind-to core --map-by ppr:8:node:pe=8 build/mallob -T={time_limit} -v=2 -J=60 -ajpc={jobs} -t={threads} -ecct={ecct} -job-desc-template={instances} -job-template=scripts/cpcs/input/job-{group_nogroup}.json -client-template=templates/client-template.json
 
     lines = [line for line in output.decode("utf-8").split("\n") if "RESPONSE_TIME" in line]
     exec_times = []

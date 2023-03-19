@@ -32,11 +32,12 @@ SatEngine::SatEngine(const Parameters& params, const SatProcessConfig& config, L
 
 	LOGGER(_logger, V4_VVER, "SAT engine for %s\n", config.getJobStr().c_str());
 	//params.printParams();
-	_num_solvers = config.threads;
 
+	_num_solvers = config.threads;
     // when root node -> save computing resources for the ECC Thread
     _is_enigne_of_root_worker = appRank == 0;
-    if (_is_enigne_of_root_worker) {
+    if (_is_enigne_of_root_worker && params.eccDisplaceSolver()) {
+        assert(_num_solvers >= params.numECCThreads());
         _num_solvers = _num_solvers - params.numECCThreads();
     }
 
