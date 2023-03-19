@@ -8,18 +8,15 @@ from datetime import datetime
 
 
 def main(instances, output, time_limit, cores, jobs):
-    results = {}
+    output = 'scripts/cpcs/output/benchmark/'
 
-    results['8 solver, 0 checker'] = run_mallob_and_get_finish_times(instances, time_limit, cores, jobs, "nogroup", 8, 0)
-    with open(output, "w") as f: f.write(json.dumps(results))
-    results['8 solver, 1 checker'] = run_mallob_and_get_finish_times(instances, time_limit, cores, jobs, "group-check", 8, 1)
-    with open(output, "w") as f: f.write(json.dumps(results))
-    results['8 solver, 2 checker'] = run_mallob_and_get_finish_times(instances, time_limit, cores, jobs, "group-check", 8, 2)
-    with open(output, "w") as f: f.write(json.dumps(results))
-    results['8 solver, 3 checker'] = run_mallob_and_get_finish_times(instances, time_limit, cores, jobs, "group-check", 8, 3)
-    with open(output, "w") as f: f.write(json.dumps(results))
-    results['8 solver, 4 checker'] = run_mallob_and_get_finish_times(instances, time_limit, cores, jobs, "group-check", 8, 4)
-    with open(output, "w") as f: f.write(json.dumps(results))
+    for instance in ['agricola', 'caldera', 'caldera-split', 'data-network', 'flashfill', 'nurikabe', 'settlers', 'snake', 'termes']:
+        results = {
+            '4 solver, 0 checker': run_mallob_and_get_finish_times('scripts/cpcs/benchmark/' + instance, time_limit, cores, jobs, "nogroup", 4, 0),
+            '4 solver, 1 checker': run_mallob_and_get_finish_times('scripts/cpcs/benchmark/' + instance, time_limit, cores, jobs, "group-check", 4, 1)
+        }
+        with open(output + instance, "w") as f:
+            f.write(json.dumps(results))
 
 
 def run_mallob_and_get_finish_times(instances, time_limit, cores, jobs, group_nogroup, threads, ecct):
@@ -30,7 +27,7 @@ def run_mallob_and_get_finish_times(instances, time_limit, cores, jobs, group_no
                                      f'-job-template=scripts/cpcs/input/job-{group_nogroup}.json '
                                      f'-client-template=templates/client-template.json', shell=True)
 
-    # exclusive mpirun -np 8 --bind-to core --map-by ppr:8:node:pe=8 build/mallob -T={time_limit} -v=2 -J=60 -ajpc={jobs} -t={threads} -ecct={ecct} -job-desc-template={instances} -job-template=scripts/cpcs/input/job-{group_nogroup}.json -client-template=templates/client-template.json
+    # exclusive mpirun -np 8 --bind-to core --map-by ppr:8:node:pe=8 build/mallob -T=1200 -v=4 -J=1 -ajpc=3 -t=8 -ecct=1 -job-desc-template=scripts/cpcs/input/instance_file_4.txt -job-template=scripts/cpcs/input/job-group-check.json -client-template=templates/client-template.json | grep -i "cpcs\|exited\|error\|warn\|solution\|over-due\|RESPONSE_TIME\|am idle"
 
     lines = [line for line in output.decode("utf-8").split("\n") if "RESPONSE_TIME" in line]
     exec_times = []
@@ -51,7 +48,7 @@ def run_mallob_and_get_finish_times(instances, time_limit, cores, jobs, group_no
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("-i", help="Input Instance File (multiple instances)", default="scripts/cpcs/input/instances_settlers_09")
-    parser.add_argument("-o", help="Output File", default="scripts/cpcs/output/finish_times.json")
+    parser.add_argument("-o", help="Output File", default="scripts/cpcs/output/finish_times")
     parser.add_argument("-t", help="Timeout in seconds", type=int, default=5)
     parser.add_argument("-c", help="Num cores to execute on", type=int, default=2)
     parser.add_argument("-j", help="Num jobs to run with", type=int, default=2)
