@@ -10,7 +10,8 @@ from datetime import datetime
 def main(instances, output, time_limit, cores, jobs):
     output = 'scripts/cpcs/output/benchmark/'
 
-    for instance in ['agricola', 'caldera', 'caldera-split', 'data-network', 'flashfill', 'nurikabe', 'settlers', 'snake', 'termes']:
+    #for instance in ['agricola', 'caldera', 'caldera-split', 'data-network', 'flashfill', 'nurikabe', 'settlers', 'snake', 'termes']:
+    for instance in ['agricola', 'caldera']:
         results = {
             '4 solver, 0 checker': run_mallob_and_get_finish_times('scripts/cpcs/benchmark/' + instance, time_limit, cores, jobs, "nogroup", 4, 0),
             '4 solver, 1 checker': run_mallob_and_get_finish_times('scripts/cpcs/benchmark/' + instance, time_limit, cores, jobs, "group-check", 4, 1)
@@ -22,7 +23,7 @@ def main(instances, output, time_limit, cores, jobs):
 def run_mallob_and_get_finish_times(instances, time_limit, cores, jobs, group_nogroup, threads, ecct):
     print(f'Started: {datetime.now()}, {group_nogroup}, t={threads}, ecct={ecct}')
     output = subprocess.check_output(f'mpirun -np {cores} --bind-to core --map-by ppr:{cores}:node:pe={threads} build/mallob '
-                                     f'-T={time_limit} -v=2 -J=60 -ajpc={jobs} -t={threads} -ecct={ecct} '
+                                     f'-T={time_limit} -v=2 -J=80 -ajpc={jobs} -t={threads} -ecct={ecct} '
                                      f'-job-desc-template={instances} '
                                      f'-job-template=scripts/cpcs/input/job-{group_nogroup}.json '
                                      f'-client-template=templates/client-template.json', shell=True)
