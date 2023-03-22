@@ -8,22 +8,25 @@ from datetime import datetime
 
 
 def main(instances, output, time_limit, cores, jobs):
-    output = 'scripts/cpcs/output/benchmark/'
+    output = 'scripts/cpcs/output/benchmark_results'
+    results = {}
 
-    #for instance in ['agricola', 'caldera', 'caldera-split', 'data-network', 'flashfill', 'nurikabe', 'settlers', 'snake', 'termes']:
-    for instance in ['agricola', 'caldera']:
-        results = {
-            '4 solver, 0 checker': run_mallob_and_get_finish_times('scripts/cpcs/benchmark/' + instance, time_limit, cores, jobs, "nogroup", 4, 0),
-            '4 solver, 1 checker': run_mallob_and_get_finish_times('scripts/cpcs/benchmark/' + instance, time_limit, cores, jobs, "group-check", 4, 1)
-        }
+    for instance in ['data-network_p01', 'data-network_p02', 'data-network_p03', 'data-network_p05', 'data-network_p07',
+                     'nurikabe_p01', 'nurikabe_p02',  'nurikabe_p03','nurikabe_p05', 'nurikabe_p07',
+                     'snake_p01', 'snake_p02', 'snake_p03', 'snake_p05', 'snake_p07',
+                     'settlers_p01', 'settlers_p02', 'settlers_p03', 'settlers_p05', 'settlers_p07']:
+
+        results[f'{instance}: 4 solver, 0 checker'] = run_mallob_and_get_finish_times('scripts/cpcs/new_benchmarks/' + instance, time_limit, cores, jobs, "nogroup", 4, 0)
+        results[f'{instance}: 4 solver, 1 checker'] = run_mallob_and_get_finish_times('scripts/cpcs/new_benchmarks/' + instance, time_limit, cores, jobs, "group-check", 4, 1)
+
         with open(output + instance, "w") as f:
             f.write(json.dumps(results))
 
 
 def run_mallob_and_get_finish_times(instances, time_limit, cores, jobs, group_nogroup, threads, ecct):
-    print(f'Started: {datetime.now()}, {group_nogroup}, t={threads}, ecct={ecct}')
+    print(f'Started {instances}: {datetime.now()}, {group_nogroup}, t={threads}, ecct={ecct}')
     output = subprocess.check_output(f'mpirun -np {cores} --bind-to core --map-by ppr:{cores}:node:pe={threads} build/mallob '
-                                     f'-T={time_limit} -v=2 -J=80 -ajpc={jobs} -t={threads} -ecct={ecct} '
+                                     f'-T={time_limit} -v=2 -J=57 -ajpc={jobs} -t={threads} -ecct={ecct} '
                                      f'-job-desc-template={instances} '
                                      f'-job-template=scripts/cpcs/input/job-{group_nogroup}.json '
                                      f'-client-template=templates/client-template.json', shell=True)

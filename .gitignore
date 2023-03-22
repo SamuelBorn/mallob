@@ -20,3 +20,4 @@ scripts/cpcs/output/*
 **/__pycache__
 timing_template.txt
 scripts/cpcs/temp
+scripts/cpcs/benchmark
