@@ -1,3 +1,9 @@
-/home/sam/Dropbox/semester7/Bachelorarbeit/mallob/instances/r3unsat_300.cnf
-/home/sam/Dropbox/semester7/Bachelorarbeit/mallob/instances/r3unsat_300.cnf
-/home/sam/Dropbox/semester7/Bachelorarbeit/mallob/instances/r3unsat_300.cnf
+../madagascar/domains/sat/settlers/settlers-psat-small-04-medium.035.cnf
+../madagascar/domains/sat/settlers/settlers-psat-small-04-medium.036.cnf
+../madagascar/domains/sat/settlers/settlers-psat-small-04-medium.037.cnf
+../madagascar/domains/sat/settlers/settlers-psat-small-04-medium.038.cnf
+../madagascar/domains/sat/settlers/settlers-psat-small-04-medium.039.cnf
+../madagascar/domains/sat/settlers/settlers-psat-small-04-medium.040.cnf
+../madagascar/domains/sat/settlers/settlers-psat-small-04-medium.041.cnf
+../madagascar/domains/sat/settlers/settlers-psat-small-04-medium.042.cnf
+../madagascar/domains/sat/settlers/settlers-psat-small-04-medium.043.cnf

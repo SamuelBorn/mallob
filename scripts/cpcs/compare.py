@@ -2,7 +2,7 @@ import argparse
 import json
 import os
 import time
-import datetime
+from datetime import datetime
 import subprocess
 
 
@@ -20,6 +20,28 @@ def main(single_problem, instance_file, output_file_path, n, j, num_cores, timeo
 
     with open(output_file_path, "w") as f:
         f.write(json.dumps(results))
+
+
+def compare_multi_ecc(cores=8, threads=4, jobs=3, num_tests=20, timeout=1000, output_file='scripts/cpcs/output/multi_ecc.json'):
+    results = {}
+
+    for ecc_threads in range(1, 7):
+        results[f'{threads} solver, {ecc_threads} checker'] = []
+        for i in range(num_tests):
+            print(f'{datetime.now()}    t={threads}     ecct={ecc_threads}      i={i}/{num_tests}')
+            output = subprocess.check_output(f'mpirun -np {cores} --bind-to core --map-by ppr:{cores}:node:pe={threads} build/mallob '
+                                             f'-T={timeout} -v=2 -J={jobs} -ajpc={jobs} -t={threads} -ecct={ecc_threads} '
+                                             f'-job-desc-template=scripts/cpcs/input/instance_file.txt '
+                                             f'-job-template=scripts/cpcs/input/job-group-check.json '
+                                             f'-client-template=templates/client-template.json', shell=True)
+            try:
+                filtered = [float(line.split(" ")[0]) for line in output.decode("utf-8").split("\n") if "RESPONSE_TIME" in line]
+                results[f'{threads} solver, {ecc_threads} checker'].append(filtered)
+            except ValueError:
+                print('Cannot convert a number')
+
+            with open(output_file, 'w') as f:
+                f.write(json.dumps(results))
 
 
 def exec_mallob(num_cores, timeout_seconds, num_jobs, stop_after, instance_file, identifier_group_nogroup):
@@ -43,7 +65,7 @@ def run_once(timeout_seconds, instance_file, num_jobs, num_cores, identifier_gro
 def run_multiple(timeout_seconds, instance_file, num_jobs, num_cores, identifier_group_nogroup, n, stop_after=None):
     results = []
     for i in range(n):
-        print(f"{datetime.datetime.now()} - {i+1}/{n} - {identifier_group_nogroup}")
+        print(f"{datetime.datetime.now()} - {i + 1}/{n} - {identifier_group_nogroup}")
         result = run_once(timeout_seconds, instance_file, num_jobs, num_cores, identifier_group_nogroup, stop_after)
         print(result)
         results.append(result)
@@ -64,7 +86,7 @@ def run_once_unfiltered(timeout_seconds, instance_file, num_jobs, num_cores, ide
 def run_multiple_unfiltered(timeout_seconds, instance_file, num_jobs, num_cores, identifier_group_nogroup, n, stop_after=None):
     results = []
     for i in range(n):
-        print(f"{datetime.datetime.now()} - {i+1}/{n} - {identifier_group_nogroup}")
+        print(f"{datetime.datetime.now()} - {i + 1}/{n} - {identifier_group_nogroup}")
         result = run_once_unfiltered(timeout_seconds, instance_file, num_jobs, num_cores, identifier_group_nogroup, stop_after)
         print(result)
         results.append(result)
@@ -81,4 +103,5 @@ if __name__ == '__main__':
     parser.add_argument("-c", help="Num cores to execute on", type=int, default=4)
     parser.add_argument("-t", help="Timeout in seconds", type=int, default=1000)
     args = parser.parse_args()
-    main(args.p, args.i, args.o, args.n, args.j, args.c, args.t)
+    # main(args.p, args.i, args.o, args.n, args.j, args.c, args.t)
+    compare_multi_ecc()
