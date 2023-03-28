@@ -19,14 +19,14 @@ def main(instances, output, time_limit, cores, jobs):
         results[f'{instance}: 4 solver, 0 checker'] = run_mallob_and_get_finish_times('scripts/cpcs/new_benchmarks/' + instance, time_limit, cores, jobs, "nogroup", 4, 0)
         results[f'{instance}: 4 solver, 1 checker'] = run_mallob_and_get_finish_times('scripts/cpcs/new_benchmarks/' + instance, time_limit, cores, jobs, "group-check", 4, 1)
 
-        with open(output + instance, "w") as f:
+        with open(output, "w") as f:
             f.write(json.dumps(results))
 
 
-def run_mallob_and_get_finish_times(instances, time_limit, cores, jobs, group_nogroup, threads, ecct):
+def run_mallob_and_get_finish_times(instances, time_limit, cores, ajpc, group_nogroup, threads, ecct, J=57):
     print(f'Started {instances}: {datetime.now()}, {group_nogroup}, t={threads}, ecct={ecct}')
     output = subprocess.check_output(f'mpirun -np {cores} --bind-to core --map-by ppr:{cores}:node:pe={threads} build/mallob '
-                                     f'-T={time_limit} -v=2 -J=57 -ajpc={jobs} -t={threads} -ecct={ecct} '
+                                     f'-T={time_limit} -v=2 -J={J} -ajpc={ajpc} -t={threads} -ecct={ecct} '
                                      f'-job-desc-template={instances} '
                                      f'-job-template=scripts/cpcs/input/job-{group_nogroup}.json '
                                      f'-client-template=templates/client-template.json', shell=True)

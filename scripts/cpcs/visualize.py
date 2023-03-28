@@ -10,14 +10,14 @@ import sys
 
 
 def main():
-    visualize_filtered()
+    visualize_unfiltered()
 
 
 def visualize_filtered():
     plt.rc('font', size=18)
     plt.figure(figsize=(8, 14))
-    plt.ylabel("Execution time (seconds)")
-    plt.xlabel("Absolute number of deleted clauses")
+    plt.ylabel("Run time t / s")
+    #plt.xlabel("Absolute number of deleted clauses")
 
     for file_idx, file in enumerate(sys.argv[1:]):
         with open(file) as f:
@@ -32,8 +32,9 @@ def visualize_filtered():
 
 def visualize_unfiltered():
     plt.rc('font', size=18)
-    plt.figure(figsize=(7.2, 14))
+    plt.figure(figsize=(7.2, 10))
     plt.ylabel("Execution time (seconds)")
+    plt.xlabel("# of checker threads")
 
     for file_idx, file in enumerate(sys.argv[1:]):
         with open(file) as f:
@@ -42,7 +43,8 @@ def visualize_unfiltered():
         if file_idx == 0:
             plt.boxplot([[sum(l) for l in lout] for lout in data.values()], labels=[key for key in data.keys()], medianprops=dict(linewidth=3, color='green'), boxprops=dict(color='blue'))
         else:
-            plt.boxplot(sum(data.values()), labels=[key for key in data.keys()], medianprops=dict(linewidth=3, color='orange'), boxprops=dict(color='red'))
+            plt.boxplot([[sum(l) for l in lout] for lout in data.values()], labels=[key for key in data.keys()], medianprops=dict(linewidth=3, color='green'), boxprops=dict(color='blue'))
+            #plt.boxplot(sum(data.values()), labels=[key for key in data.keys()], medianprops=dict(linewidth=3, color='orange'), boxprops=dict(color='red'))
     plt.show()
 
 

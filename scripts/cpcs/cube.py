@@ -10,6 +10,7 @@ import shutil
 import math
 import compare
 import diversify_amend
+import cactus
 
 
 def main(single_problem, output_file_path, num_tests, num_jobs, num_cores, timeout):
@@ -24,6 +25,21 @@ def main(single_problem, output_file_path, num_tests, num_jobs, num_cores, timeo
 
     with open(output_file_path, "w") as f:
         json.dump(results, f)
+
+
+def cube_same_with_heuristic(output_file='scripts/cpcs/output/cube_heuristic', timeout=600, J=4, ajpc=4, num_cores=8, num_threads=4, num_tests=20, cube_instances='scripts/cpcs/input/cube_heuristic_instances', mono_instance='/home/born/CnC/tests/schur-medium.cnf'):
+    results = {
+        "cube with sharing": [],
+        "cube without sharing": [],
+        "mono": []
+    }
+
+    for i in range(num_tests):
+        results["cube with sharing"].append(cactus.run_mallob_and_get_finish_times(cube_instances, timeout, num_cores, ajpc, 'group-nocheck', num_threads, 4, J=J))
+        results["cube without sharing"].append(cactus.run_mallob_and_get_finish_times(cube_instances, timeout, num_cores, ajpc, 'nogroup', num_threads, 0, J=J))
+        results["mono"].append(exec_mono(num_cores, timeout, mono_instance, num_threads))
+        with open(output_file, 'w') as f:
+            f.write(json.dumps(results))
 
 
 def cube_compare(num_cores, num_tests, timeout=100):
@@ -139,8 +155,8 @@ def exec_mono_multiple(num_cores, timeout_seconds, single_problem, num_tests):
     return results
 
 
-def exec_mono(num_cores, timeout_seconds, single_problem):
-    output = subprocess.check_output(f'mpirun -np {num_cores} --bind-to core build/mallob -jwl={timeout_seconds} -v=2 -c=1 -mono={single_problem}', shell=True)
+def exec_mono(num_cores, timeout_seconds, single_problem, num_threads=4):
+    output = subprocess.check_output(f'mpirun -np {num_cores} --bind-to core --map-by ppr:{num_cores}:node:pe={num_threads}  build/mallob -T={timeout_seconds} -t={num_threads} -v=2 -mono={single_problem}', shell=True)
     return [float(line.split(" ")[5]) for line in output.decode("utf-8").split("\n") if "RESPONSE_TIME" in line]
 
 
@@ -192,4 +208,5 @@ if __name__ == '__main__':
     # main(args.i, args.o, args.n, args.j, args.c, args.t)
     # cube_increase(args.t, args.c)
     # cube_compare(args.c, args.n, args.t)
-    cube_random(args.c, timeout=120)
+    # cube_random(args.c, timeout=120)
+    cube_same_with_heuristic()
